@@ -1,0 +1,135 @@
+/* Fontes auto-hospedadas: não dependem de internet para carregar. */
+@import "@fontsource-variable/plus-jakarta-sans";
+@import "@fontsource-variable/sora";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply font-sans text-ink-800 antialiased;
+    font-feature-settings: "cv05" 1, "ss01" 1;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-display tracking-tight;
+  }
+
+  /* Foco visível e consistente em todo o app (acessibilidade por teclado). */
+  :focus-visible {
+    @apply outline-none ring-2 ring-emerald-500 ring-offset-2 ring-offset-white rounded-md;
+  }
+
+  /* Ícone do seletor de data em cor de marca, não no cinza padrão do Chrome. */
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.45;
+    transition: opacity 0.15s ease;
+  }
+  input[type="date"]:hover::-webkit-calendar-picker-indicator {
+    opacity: 0.9;
+  }
+}
+
+@layer components {
+  /* ── Campos de formulário ─────────────────────────────────────────────── */
+  .field {
+    @apply w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 text-sm text-ink-900
+           placeholder:text-ink-400 transition
+           focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-500/15
+           disabled:cursor-not-allowed disabled:bg-ink-50 disabled:text-ink-400;
+  }
+
+  .field-label {
+    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ink-500;
+  }
+
+  .field-hint {
+    @apply mt-1.5 text-xs text-ink-400;
+  }
+
+  /* ── Botões ───────────────────────────────────────────────────────────── */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold
+           transition active:scale-[.985] disabled:pointer-events-none disabled:opacity-55;
+  }
+
+  .btn-primary {
+    @apply btn bg-emerald-600 text-white shadow-sm shadow-emerald-900/20 hover:bg-emerald-700;
+  }
+
+  .btn-ghost {
+    @apply btn border border-ink-200 bg-white text-ink-700 hover:border-ink-300 hover:bg-ink-50;
+  }
+
+  .btn-danger {
+    @apply btn bg-rose-600 text-white hover:bg-rose-700;
+  }
+
+  /* ── Superfícies ──────────────────────────────────────────────────────── */
+  .card {
+    @apply rounded-2xl border border-ink-100 bg-white shadow-card;
+  }
+}
+
+@layer utilities {
+  /* Valores monetários alinham em coluna: dígitos de largura fixa. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Gradiente da marca (azul → verde do logotipo). */
+  .bg-brand-gradient {
+    background-image: linear-gradient(110deg, #1d5ce0 0%, #0e9f6e 55%, #4ade80 100%);
+  }
+
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Barra de rolagem discreta, alinhada ao tema da marca. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgb(200 220 215);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(157 191 184);
+}
+
+/* Respeita quem prefere menos movimento. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,53 @@
+{
+  // Visit https://aka.ms/tsconfig to read more about this file
+  "compilerOptions": {
+    // File Layout
+    // "rootDir": "./src",
+    // "outDir": "./dist",
+
+    // Environment Settings
+    // See also https://aka.ms/tsconfig/module
+    "module": "es2022",
+    // "node" (= node10) é o algoritmo de resolução anterior a 2019: ele não lê
+    // o campo "exports" do package.json, que todo pacote moderno usa. Está
+    // depreciado e para de funcionar no TypeScript 7.
+    // "bundler" descreve o que de fato acontece aqui: quem executa o código é o
+    // tsx (esbuild), que resolve módulos como um bundler e já faz o interop de
+    // CommonJS — por isso `import bcrypt from "bcrypt"` sempre funcionou em
+    // execução, mesmo com o editor reclamando.
+    "moduleResolution": "bundler",
+    "target": "esnext",
+    "types": [],
+    "typeRoots": ["./node_modules/@types", "./src/@types"],
+    // For nodejs:
+    // "lib": ["esnext"],
+    // "types": ["node"],
+    // and npm install -D @types/node
+
+    // Other Outputs
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+
+    // Stricter Typechecking Options
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+
+    // Style Options
+    // "noImplicitReturns": true,
+    // "noImplicitOverride": true,
+    // "noUnusedLocals": true,
+    // "noUnusedParameters": true,
+    // "noFallthroughCasesInSwitch": true,
+    // "noPropertyAccessFromIndexSignature": true,
+
+    // Recommended Options
+    "strict": true,
+    "jsx": "react-jsx",
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "noUncheckedSideEffectImports": true,
+    "moduleDetection": "force",
+    "skipLibCheck": true
+  }
+}
