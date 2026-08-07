@@ -27,11 +27,22 @@ export default function Modal({
 }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
 
+  // onClose chega como uma arrow function nova a cada render do componente pai
+  // (ex.: onClose={() => setEditing(null)}). Colocar `onClose` nas dependências
+  // do efeito abaixo fazia o efeito rodar de novo a cada tecla digitada em
+  // qualquer campo do modal — e panelRef.current?.focus() roubava o foco do
+  // input de volta para o painel do modal. Guardar a função mais recente numa
+  // ref deixa o efeito preso só ao ciclo de abrir/fechar.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
   useEffect(() => {
     if (!open) return;
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") onCloseRef.current();
     };
 
     const previousOverflow = document.body.style.overflow;
@@ -43,7 +54,7 @@ export default function Modal({
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
 

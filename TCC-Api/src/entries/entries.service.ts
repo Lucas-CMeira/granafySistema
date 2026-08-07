@@ -13,6 +13,14 @@ export class EntriesService {
         private goalsRepository: GoalsRepository
     ) { }
 
+    /** Uma meta é concluída quando a soma das receitas atreladas atinge o valor objetivo. */
+    private isGoalCompleted(goal: { value: number; entries?: { type: string; value: number }[] }) {
+        const saved = (goal.entries || [])
+            .filter((entry) => entry.type === "income")
+            .reduce((total, entry) => total + Math.abs(Number(entry.value)), 0);
+        return saved >= goal.value;
+    }
+
     async createEntry(
         title: string,
         description: string | undefined,
@@ -54,6 +62,9 @@ export class EntriesService {
             const goal = await this.goalsRepository.findById(goalId, userId);
             if (!goal) {
                 throw new Error("Meta não encontrada ou sem permissão");
+            }
+            if (this.isGoalCompleted(goal)) {
+                throw new Error("Esta meta já foi concluída. Não é possível atrelar novos lançamentos a ela.");
             }
         }
 
@@ -176,6 +187,15 @@ export class EntriesService {
             const goal = await this.goalsRepository.findById(data.goalId, userId);
             if (!goal) {
                 throw new Error("Meta não encontrada ou sem permissão");
+            }
+
+            // Só bloqueia quando o lançamento está sendo atrelado a uma meta nova
+            // (ou a uma diferente da que já tinha). Editar outros campos de um
+            // lançamento que já pertence a essa meta não pode ser barrado por ela
+            // já estar concluída — foi essa própria soma que a completou.
+            const isNewAttachment = data.goalId !== (entry as any).goalId;
+            if (isNewAttachment && this.isGoalCompleted(goal)) {
+                throw new Error("Esta meta já foi concluída. Não é possível atrelar novos lançamentos a ela.");
             }
         }
 

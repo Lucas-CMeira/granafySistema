@@ -28,6 +28,8 @@ import {
   categoryColor,
   categoryInitials,
 } from "../../utils/format";
+import { isGoalCompleted } from "../../utils/goals";
+import type { Goal } from "../../utils/goals";
 import PageHeader from "../../components/PageHeader";
 import StatCard from "../../components/StatCard";
 import Highlight from "../../components/Highlight";
@@ -38,7 +40,10 @@ import { useToast } from "../../components/toast-context";
 import { errorMessage } from "../../utils/errors";
 
 type Category = { id: string; name: string; color?: string | null };
-type Goal = { id: string; title: string };
+// A API devolve o objeto completo da meta dentro do lançamento, mas sem a lista
+// de `entries` dela (o include de /entries não a traz) — por isso este tipo
+// local mais enxuto, separado do `Goal` de utils/goals usado para o <select>.
+type GoalRef = { id: string; title: string };
 
 type Entry = {
   id: string;
@@ -49,7 +54,7 @@ type Entry = {
   categoryId?: string | null;
   category?: Category | null;
   goalId?: string | null;
-  goal?: Goal | null;
+  goal?: GoalRef | null;
   isFixed?: boolean;
   fixedDay?: number | null;
   parentId?: string | null;
@@ -127,6 +132,13 @@ const EntriesPage = () => {
   const isOthers = (categoryId: string) =>
     categories.find((category) => category.id === categoryId)?.name ===
     "Outros";
+
+  // Metas já concluídas não podem receber novos lançamentos — mas se o
+  // formulário já está com uma delas selecionada (edição de um lançamento que
+  // já pertence a ela), ela continua na lista para não sumir sob os pés do
+  // usuário.
+  const availableGoals = (selectedGoalId: string) =>
+    goals.filter((goal) => !isGoalCompleted(goal) || goal.id === selectedGoalId);
 
   // ── Períodos disponíveis, montados a partir dos próprios lançamentos ─────
   const periods = useMemo(() => {
@@ -547,7 +559,7 @@ const EntriesPage = () => {
               </div>
             )}
 
-            {form.type === "income" && goals.length > 0 && (
+            {form.type === "income" && availableGoals(form.goalId).length > 0 && (
               <div className="animate-fade-in">
                 <label htmlFor="entry-goal" className="field-label">
                   Guardar para uma meta
@@ -559,7 +571,7 @@ const EntriesPage = () => {
                   className="field"
                 >
                   <option value="">Nenhuma meta</option>
-                  {goals.map((goal) => (
+                  {availableGoals(form.goalId).map((goal) => (
                     <option key={goal.id} value={goal.id}>
                       {goal.title}
                     </option>
@@ -925,7 +937,7 @@ const EntriesPage = () => {
             </div>
           )}
 
-          {editForm.type === "income" && goals.length > 0 && (
+          {editForm.type === "income" && availableGoals(editForm.goalId).length > 0 && (
             <div>
               <label htmlFor="edit-entry-goal" className="field-label">
                 Guardar para uma meta
@@ -937,7 +949,7 @@ const EntriesPage = () => {
                 className="field"
               >
                 <option value="">Nenhuma meta</option>
-                {goals.map((goal) => (
+                {availableGoals(editForm.goalId).map((goal) => (
                   <option key={goal.id} value={goal.id}>
                     {goal.title}
                   </option>
