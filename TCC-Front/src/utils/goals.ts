@@ -1,9 +1,5 @@
 // Regras de progresso e conclusão de metas.
-//
-// Moravam dentro de goals-page.tsx, e a tela de perfil importava a função de
-// lá — o que fazia o arquivo exportar componente e função ao mesmo tempo e
-// quebrava o Fast Refresh (react-refresh/only-export-components). Como é regra
-// de negócio, e não interface, o lugar certo é aqui.
+
 
 export interface GoalEntry {
   id?: string;
@@ -28,7 +24,6 @@ export type GoalCompletion = {
   status: "none" | "early" | "on_time" | "late";
 };
 
-/** Apenas receitas (depósitos) contam como progresso real de uma meta. */
 export const sumSavedEntries = (entries: GoalEntry[] = []) =>
   entries
     .filter((entry) => entry.type === "income")
@@ -36,10 +31,6 @@ export const sumSavedEntries = (entries: GoalEntry[] = []) =>
 
 export const isGoalCompleted = (goal: Goal) => sumSavedEntries(goal.entries) >= goal.value;
 
-/**
- * Descobre em qual depósito a meta bateu o objetivo e compara essa data com o
- * prazo — é o que permite dizer "concluída 12 dias antes do previsto".
- */
 export function getGoalCompletionDetails(goal: Goal): GoalCompletion {
   if (!goal || !goal.entries || goal.entries.length === 0) {
     return { isCompleted: false, completedDate: null, diffDays: 0, status: "none" };
