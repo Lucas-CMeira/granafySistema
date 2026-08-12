@@ -3,7 +3,6 @@
 import type { ReactNode } from "react";
 
 type PageHeaderProps = {
-  /** Sobrancelha curta que situa a tela dentro do app. */
   eyebrow: string;
   title: ReactNode;
   subtitle: ReactNode;
