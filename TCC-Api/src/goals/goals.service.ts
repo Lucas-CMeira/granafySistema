@@ -63,10 +63,10 @@ export class GoalsService {
             throw new Error("Meta não encontrada ou sem permissão");
         }
 
-        // Os lançamentos vinculados à meta já compõem o saldo geral do usuário
-        // (o vínculo com a meta é apenas uma marcação para acompanhar o progresso).
-        // Por isso, ao excluir a meta, apenas desvinculamos os lançamentos —
-        // eles continuam no histórico e no saldo normalmente, sem duplicar valores.
+        // Enquanto atrelados, esses lançamentos ficam fora do saldo disponível do
+        // usuário (é uma "caixinha": o valor está reservado para a meta). Por isso,
+        // ao excluir a meta, apenas desvinculamos os lançamentos — eles continuam
+        // no histórico e o valor volta a contar no saldo disponível.
         await prisma.entry.updateMany({
             where: { goalId: id, userId },
             data: { goalId: null }

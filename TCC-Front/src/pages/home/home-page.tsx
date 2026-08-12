@@ -8,6 +8,7 @@ import {
   MdTrendingUp,
   MdTrendingDown,
   MdAccountBalanceWallet,
+  MdSavings,
   MdFlag,
   MdReceiptLong,
   MdAdd,
@@ -35,6 +36,7 @@ type Entry = {
   type: "income" | "expenses";
   date: string;
   category?: { name?: string; color?: string | null } | null;
+  goalId?: string | null;
 };
 
 type Goal = {
@@ -87,7 +89,9 @@ const HomePage = () => {
 
   const currentMonth = useMemo(() => monthKey(new Date().toISOString()), []);
 
-  // O resumo do mês é o número acionável; o saldo acumulado é o contexto.
+  // O resumo do mês é o número acionável; o saldo disponível é o contexto.
+  // Dinheiro atrelado a uma meta é uma "caixinha": sai do saldo disponível e
+  // só volta a contar como disponível se a meta for desvinculada.
   const finances = useMemo(() => {
     const monthEntries = entries.filter((entry) => monthKey(entry.date) === currentMonth);
 
@@ -97,8 +101,19 @@ const HomePage = () => {
     const monthIncome = sum(monthEntries, "income");
     const monthExpenses = sum(monthEntries, "expenses");
     const totalBalance = sum(entries, "income") - sum(entries, "expenses");
+    const goalsBalance = entries
+      .filter((entry) => entry.type === "income" && entry.goalId)
+      .reduce((total, entry) => total + entry.value, 0);
+    const availableBalance = totalBalance - goalsBalance;
 
-    return { monthIncome, monthExpenses, monthBalance: monthIncome - monthExpenses, totalBalance };
+    return {
+      monthIncome,
+      monthExpenses,
+      monthBalance: monthIncome - monthExpenses,
+      totalBalance,
+      goalsBalance,
+      availableBalance,
+    };
   }, [entries, currentMonth]);
 
   const recentEntries = useMemo(() => entries.slice(0, 5), [entries]);
@@ -141,7 +156,7 @@ const HomePage = () => {
       </header>
 
       {/* ── Placar ────────────────────────────────────────────────────────── */}
-      <section className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <section className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label={`Receitas · ${monthLabel.split(" de ")[0]}`}
           value={`R$ ${formatMoney(finances.monthIncome)}`}
@@ -161,11 +176,18 @@ const HomePage = () => {
           }
         />
         <StatCard
-          label="Saldo acumulado"
-          value={`R$ ${formatMoney(finances.totalBalance)}`}
+          label="Saldo disponível"
+          value={`R$ ${formatMoney(finances.availableBalance)}`}
           featured
           icon={<MdAccountBalanceWallet />}
-          hint="Todas as receitas menos todas as despesas"
+          hint="Sem contar o que está guardado em metas"
+        />
+        <StatCard
+          label="Guardado em metas"
+          value={`R$ ${formatMoney(finances.goalsBalance)}`}
+          tone="plan"
+          icon={<MdSavings />}
+          hint={goals.length > 0 ? `Em ${goals.length} meta${goals.length === 1 ? "" : "s"}` : "Nenhuma meta ainda"}
         />
       </section>
 

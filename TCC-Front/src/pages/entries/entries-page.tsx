@@ -57,6 +57,7 @@ type Entry = {
   goal?: GoalRef | null;
   isFixed?: boolean;
   fixedDay?: number | null;
+  repeatCount?: number | null;
   parentId?: string | null;
 };
 
@@ -71,7 +72,7 @@ const EMPTY_FORM = {
   customCategory: "",
   goalId: "",
   isFixed: false,
-  fixedDay: "",
+  repeatCount: "12",
 };
 
 type FormState = typeof EMPTY_FORM;
@@ -178,11 +179,16 @@ const EntriesPage = () => {
     const expenses = scope
       .filter((e) => e.type === "expenses")
       .reduce((sum, e) => sum + e.value, 0);
+    // Receita atrelada a uma meta é uma "caixinha": fica guardada nela e não
+    // conta no saldo do período, só no saldo da meta.
+    const goalsIncome = scope
+      .filter((e) => e.type === "income" && e.goalId)
+      .reduce((sum, e) => sum + e.value, 0);
 
     return {
       income,
       expenses,
-      balance: income - expenses,
+      balance: income - goalsIncome - expenses,
       count: scope.length,
     };
   }, [entries, period]);
@@ -237,9 +243,9 @@ const EntriesPage = () => {
       return "Informe um valor maior que zero.";
     if (!state.date) return "Escolha a data do lançamento.";
     if (state.isFixed) {
-      const day = Number(state.fixedDay);
-      if (!day || day < 1 || day > 31)
-        return "Informe um dia do mês entre 1 e 31 para a repetição.";
+      const times = Number(state.repeatCount);
+      if (!times || times < 1 || times > 12)
+        return "Informe quantas vezes o lançamento deve se repetir (1 a 12 meses).";
     }
     return null;
   };
@@ -269,7 +275,7 @@ const EntriesPage = () => {
           categoryId,
           goalId: form.goalId || undefined,
           isFixed: form.isFixed,
-          fixedDay: form.isFixed ? Number(form.fixedDay) : undefined,
+          repeatCount: form.isFixed ? Number(form.repeatCount) : undefined,
         }),
       });
 
@@ -305,7 +311,7 @@ const EntriesPage = () => {
       customCategory: "",
       goalId: entry.goalId || "",
       isFixed: Boolean(entry.isFixed),
-      fixedDay: entry.fixedDay ? String(entry.fixedDay) : "",
+      repeatCount: entry.repeatCount ? String(entry.repeatCount) : "12",
     });
   };
 
@@ -335,7 +341,7 @@ const EntriesPage = () => {
           categoryId,
           goalId: editForm.goalId || null,
           isFixed: editForm.isFixed,
-          fixedDay: editForm.isFixed ? Number(editForm.fixedDay) : null,
+          repeatCount: editForm.isFixed ? Number(editForm.repeatCount) : null,
         }),
       });
 
@@ -578,7 +584,7 @@ const EntriesPage = () => {
                   ))}
                 </select>
                 <p className="field-hint">
-                  O valor continua no seu saldo e ainda soma à meta.
+                  O valor sai do seu saldo disponível e passa a contar como guardado nessa meta.
                 </p>
               </div>
             )}
@@ -586,8 +592,9 @@ const EntriesPage = () => {
             <FixedToggle
               checked={form.isFixed}
               onChange={(checked) => setField("isFixed", checked)}
-              day={form.fixedDay}
-              onDayChange={(day) => setField("fixedDay", day)}
+              date={form.date}
+              repeatCount={form.repeatCount}
+              onRepeatCountChange={(times) => setField("repeatCount", times)}
               idPrefix="entry"
             />
 
@@ -708,7 +715,7 @@ const EntriesPage = () => {
                 const monthBalance = monthEntries.reduce(
                   (sum, entry) =>
                     entry.type === "income"
-                      ? sum + entry.value
+                      ? sum + (entry.goalId ? 0 : entry.value)
                       : sum - entry.value,
                   0,
                 );
@@ -757,7 +764,8 @@ const EntriesPage = () => {
 
                                 {entry.isFixed && (
                                   <Badge tone="ocean" icon={<MdRepeat />}>
-                                    Fixo · dia {entry.fixedDay}
+                                    Fixo · dia {entry.fixedDay ?? new Date(entry.date).getUTCDate()} ·{" "}
+                                    {entry.repeatCount ?? 12}x
                                   </Badge>
                                 )}
                                 {parent && (
@@ -961,8 +969,9 @@ const EntriesPage = () => {
           <FixedToggle
             checked={editForm.isFixed}
             onChange={(checked) => setEditField("isFixed", checked)}
-            day={editForm.fixedDay}
-            onDayChange={(day) => setEditField("fixedDay", day)}
+            date={editForm.date}
+            repeatCount={editForm.repeatCount}
+            onRepeatCountChange={(times) => setEditField("repeatCount", times)}
             idPrefix="edit-entry"
           />
 
@@ -1055,16 +1064,22 @@ function TypeToggle({
 function FixedToggle({
   checked,
   onChange,
-  day,
-  onDayChange,
+  date,
+  repeatCount,
+  onRepeatCountChange,
   idPrefix,
 }: {
   checked: boolean;
   onChange: (checked: boolean) => void;
-  day: string;
-  onDayChange: (day: string) => void;
+  date: string;
+  repeatCount: string;
+  onRepeatCountChange: (times: string) => void;
   idPrefix: string;
 }) {
+  // O dia da repetição é sempre o dia do campo "Data" do formulário — não faz
+  // sentido pedir de novo aqui.
+  const day = date ? Number(date.slice(8, 10)) : null;
+
   return (
     <div
       className={`rounded-xl border p-3.5 transition ${checked ? "border-ocean-200 bg-ocean-50/60" : "border-ink-200"}`}
@@ -1093,21 +1108,27 @@ function FixedToggle({
 
       {checked && (
         <div className="mt-3 animate-fade-in">
-          <label htmlFor={`${idPrefix}-fixed-day`} className="field-label">
-            Dia do mês
+          <label htmlFor={`${idPrefix}-repeat-count`} className="field-label">
+            Repetir por quantos meses
           </label>
-          <input
-            id={`${idPrefix}-fixed-day`}
-            type="number"
-            value={day}
-            onChange={(e) => onDayChange(e.target.value)}
+          <select
+            id={`${idPrefix}-repeat-count`}
+            value={repeatCount}
+            onChange={(e) => onRepeatCountChange(e.target.value)}
             required
-            min={1}
-            max={31}
-            placeholder="5"
             className="field w-28 bg-white"
-          />
-          <p className="field-hint">Em meses mais curtos, cai no último dia.</p>
+          >
+            {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
+              <option key={n} value={n}>
+                {n}x
+              </option>
+            ))}
+          </select>
+          <p className="field-hint">
+            {day
+              ? `Cai todo mês no dia ${day}, o mesmo da data acima (em meses mais curtos, no último dia). 12 = repete por 1 ano.`
+              : "12 = repete por 1 ano."}
+          </p>
         </div>
       )}
     </div>

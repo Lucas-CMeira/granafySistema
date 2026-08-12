@@ -15,7 +15,7 @@ export class EntriesRepository {
         categoryId: string,
         goalId?: string,
         isFixed?: boolean,
-        fixedDay?: number,
+        repeatCount?: number,
         parentId?: string
     }) {
         return await prisma.entry.create({

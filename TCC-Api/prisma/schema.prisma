@@ -10,7 +10,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 enum EntryType {
@@ -50,9 +49,10 @@ model Entry {
   goalId String? @map("goal_id")
   goal   Goal?   @relation(fields: [goalId], references: [id])
 
-  isFixed  Boolean @default(false)
-  fixedDay Int?    @map("fixed_day")
-  parentId String? @map("parent_id")
+  isFixed     Boolean @default(false)
+  fixedDay    Int?    @map("fixed_day")
+  repeatCount Int?    @map("repeat_count")
+  parentId    String? @map("parent_id")
 
   @@map("entry")
 }
@@ -62,7 +62,6 @@ model Category {
   name        String
   description String?
   color       String?  @db.Char(6)
-  // icon String?  Fezin ira analisar as condições
   createdAt   DateTime @default(now()) @map("created_at")
 
   userId String @map("user_id")

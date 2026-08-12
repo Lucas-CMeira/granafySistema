@@ -12,7 +12,7 @@ export class EntriesController {
             await request.jwtVerify();
             const { sub: userId } = request.user as { sub: string };
 
-            const { title, description, value, type, date, categoryId, goalId, isFixed, fixedDay } = request.body as {
+            const { title, description, value, type, date, categoryId, goalId, isFixed, repeatCount } = request.body as {
                 title: string
                 description?: string
                 value: number
@@ -21,7 +21,7 @@ export class EntriesController {
                 categoryId: string
                 goalId?: string
                 isFixed?: boolean
-                fixedDay?: number
+                repeatCount?: number
             }
 
             const entry = await this.entriesService.createEntry(
@@ -34,7 +34,7 @@ export class EntriesController {
                 categoryId,
                 goalId,
                 isFixed,
-                fixedDay
+                repeatCount
             );
 
             return reply.status(201).send(entry);
@@ -77,7 +77,7 @@ export class EntriesController {
                 categoryId?: string
                 goalId?: string | null
                 isFixed?: boolean
-                fixedDay?: number | null
+                repeatCount?: number | null
             }
 
             const updatedEntry = await this.entriesService.updateEntry(id, userId, body);

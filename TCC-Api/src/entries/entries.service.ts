@@ -31,7 +31,7 @@ export class EntriesService {
         categoryId: string,
         goalId: string | undefined,
         isFixed: boolean = false,
-        fixedDay: number | undefined = undefined,
+        repeatCount: number | undefined = undefined,
         parentId: string | undefined = undefined
     ) {
         if (!title || value === undefined || !type || !date || !categoryId) {
@@ -68,8 +68,8 @@ export class EntriesService {
             }
         }
 
-        if (isFixed && (!fixedDay || fixedDay < 1 || fixedDay > 31)) {
-            throw new Error("Informe um dia do mês válido (1-31) para o lançamento fixo");
+        if (isFixed && (!repeatCount || repeatCount < 1 || repeatCount > 12)) {
+            throw new Error("Informe quantas vezes o lançamento deve se repetir (1 a 12 meses)");
         }
 
         const payload: any = {
@@ -83,17 +83,16 @@ export class EntriesService {
         if (description) payload.description = description;
         if (goalId) payload.goalId = goalId;
         if (isFixed) payload.isFixed = true;
-        if (fixedDay) payload.fixedDay = fixedDay;
+        if (repeatCount) payload.repeatCount = repeatCount;
         if (parentId) payload.parentId = parentId;
+        // fixedDay não é definido aqui: getEntries() já cai para o dia da
+        // própria data do lançamento quando fixedDay está vazio.
 
         return await this.entriesRepository.create(payload);
     }
 
     async getEntries(userId: string) {
         const fixedEntries = await this.entriesRepository.findFixedEntries(userId);
-        const now = new Date();
-        const currentYear = now.getUTCFullYear();
-        const currentMonth = now.getUTCMonth();
 
         for (const fixed of fixedEntries) {
             const fixedEntryDate = new Date(fixed.date);
@@ -102,7 +101,11 @@ export class EntriesService {
 
             const dayToUse = fixed.fixedDay || fixedEntryDate.getUTCDate();
 
-            const totalMonths = (currentYear - startYear) * 12 + (currentMonth - startMonth) + 2;
+            // O total de ocorrências (original + repetições) é sempre o repeatCount
+            // escolhido — geradas de uma vez, sem depender de quantos meses já se
+            // passaram desde hoje. Assim o usuário já vê o calendário completo da
+            // repetição (ex: escolheu 6x, aparecem os 6 meses de uma vez).
+            const totalMonths = fixed.repeatCount ?? 12;
 
             for (let i = 0; i < totalMonths; i++) {
                 const targetDate = new Date(Date.UTC(startYear, startMonth + i, 1));
@@ -153,7 +156,7 @@ export class EntriesService {
             categoryId?: string
             goalId?: string | null
             isFixed?: boolean
-            fixedDay?: number | null
+            repeatCount?: number | null
         }
     ) {
         const entry = await this.entriesRepository.findById(id, userId);
@@ -213,7 +216,15 @@ export class EntriesService {
         if (data.categoryId !== undefined) updatePayload.categoryId = data.categoryId;
         if (data.goalId !== undefined) updatePayload.goalId = data.goalId;
         if (data.isFixed !== undefined) updatePayload.isFixed = data.isFixed;
-        if (data.fixedDay !== undefined) updatePayload.fixedDay = data.fixedDay;
+        if (data.repeatCount !== undefined) updatePayload.repeatCount = data.repeatCount;
+
+        // Sempre que o lançamento é (ou continua sendo) fixo, limpa fixedDay para
+        // que getEntries() volte a derivar o dia da própria data do lançamento —
+        // assim, editar a data também atualiza o dia em que as repetições caem.
+        const effectiveIsFixed = data.isFixed !== undefined ? data.isFixed : (entry as any).isFixed;
+        if (effectiveIsFixed) {
+            updatePayload.fixedDay = null;
+        }
 
         // Se o tipo virou "expenses" e não veio um goalId explícito para limpar,
         // desvincula qualquer meta anterior (regra: só receitas ficam atreladas a metas).

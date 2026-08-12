@@ -348,8 +348,9 @@ const GoalsPage = () => {
             </p>
             <p className="text-sm leading-relaxed text-ocean-900/80">
               Ao registrar uma <strong>receita</strong> em Lançamentos, escolha{" "}
-              <em>“Guardar para uma meta”</em>. O valor continua no seu saldo normalmente — a meta
-              apenas marca quanto dele já está reservado para aquele objetivo.
+              <em>“Guardar para uma meta”</em>. O valor sai do seu saldo disponível e vai para essa
+              “caixinha” — como no Nubank, ele continua seu, só fica separado até a meta ser
+              concluída ou desvinculada.
             </p>
           </aside>
         </div>
@@ -488,8 +489,8 @@ const GoalsPage = () => {
             <MdWarningAmber aria-hidden className="mt-0.5 shrink-0 text-lg text-amber-600" />
             <p className="text-sm leading-relaxed text-amber-900">
               As receitas atreladas a esta meta{" "}
-              <strong>continuam no seu histórico e no seu saldo</strong>. Elas apenas deixam de
-              contar como progresso — nenhum valor é perdido.
+              <strong>continuam no seu histórico e voltam a contar no seu saldo disponível</strong>.
+              Elas apenas deixam de contar como progresso da meta — nenhum valor é perdido.
             </p>
           </div>
 
