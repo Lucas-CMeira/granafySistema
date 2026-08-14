@@ -114,7 +114,6 @@ const ProfilePage = () => {
     return { income, expenses, balance, savingsRate };
   }, [entries]);
 
-  // ── Despesas por categoria ───────────────────────────────────────────────
   const categoryChartData = useMemo(() => {
     const byCategory = new Map<string, { value: number; color: string }>();
 

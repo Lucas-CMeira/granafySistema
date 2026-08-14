@@ -6,7 +6,6 @@ const MONTHS_LONG = [
   "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
 ];
 
-/** "1.234,56" — sem o símbolo, para poder compor com um "R$" estilizado à parte. */
 export function formatMoney(value: number): string {
   return Number(value || 0).toLocaleString("pt-BR", {
     minimumFractionDigits: 2,

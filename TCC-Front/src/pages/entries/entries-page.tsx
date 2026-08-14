@@ -1,6 +1,5 @@
 // Tela de lançamentos: cadastro de receitas/despesas, histórico filtrável por
-// período, tipo e busca, com edição e exclusão — incluindo o tratamento dos
-// lançamentos fixos, que geram ocorrências automáticas todo mês.
+// período, tipo e busca, com edição e exclusão.
 
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -40,9 +39,6 @@ import { useToast } from "../../components/toast-context";
 import { errorMessage } from "../../utils/errors";
 
 type Category = { id: string; name: string; color?: string | null };
-// A API devolve o objeto completo da meta dentro do lançamento, mas sem a lista
-// de `entries` dela (o include de /entries não a traz) — por isso este tipo
-// local mais enxuto, separado do `Goal` de utils/goals usado para o <select>.
 type GoalRef = { id: string; title: string };
 
 type Entry = {
@@ -127,21 +123,19 @@ const EntriesPage = () => {
 
   useEffect(() => {
     fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const isOthers = (categoryId: string) =>
     categories.find((category) => category.id === categoryId)?.name ===
     "Outros";
 
-  // Metas já concluídas não podem receber novos lançamentos — mas se o
-  // formulário já está com uma delas selecionada (edição de um lançamento que
-  // já pertence a ela), ela continua na lista para não sumir sob os pés do
-  // usuário.
-  const availableGoals = (selectedGoalId: string) =>
-    goals.filter((goal) => !isGoalCompleted(goal) || goal.id === selectedGoalId);
+  // Metas já concluídas não podem receber novos lançamentos.
 
-  // ── Períodos disponíveis, montados a partir dos próprios lançamentos ─────
+  const availableGoals = (selectedGoalId: string) =>
+    goals.filter(
+      (goal) => !isGoalCompleted(goal) || goal.id === selectedGoalId,
+    );
+
   const periods = useMemo(() => {
     const seen = new Map<string, string>();
     entries.forEach((entry) =>
@@ -165,8 +159,6 @@ const EntriesPage = () => {
     });
   }, [entries, period, typeFilter, search]);
 
-  // Os totais seguem o filtro de período, mas ignoram busca e tipo: um placar
-  // que mudasse ao filtrar "só despesas" mostraria um saldo que não existe.
   const totals = useMemo(() => {
     const scope =
       period === "all"
@@ -179,7 +171,7 @@ const EntriesPage = () => {
     const expenses = scope
       .filter((e) => e.type === "expenses")
       .reduce((sum, e) => sum + e.value, 0);
-    // Receita atrelada a uma meta é uma "caixinha": fica guardada nela e não
+    // Receita atrelada a uma meta é uma "caixinha": ica guardada nela e não
     // conta no saldo do período, só no saldo da meta.
     const goalsIncome = scope
       .filter((e) => e.type === "income" && e.goalId)
@@ -212,7 +204,6 @@ const EntriesPage = () => {
     setPeriod("all");
   };
 
-  /** Cria a categoria digitada em "Outros" quando houver nome; devolve o id final. */
   const resolveCategoryId = async (state: FormState): Promise<string> => {
     if (!isOthers(state.categoryId) || !state.customCategory.trim())
       return state.categoryId;
@@ -225,8 +216,6 @@ const EntriesPage = () => {
     });
 
     if (!response.ok) {
-      // Falhar em silêncio aqui gravava o lançamento em "Outros" sem avisar;
-      // agora o usuário sabe que a categoria não foi criada.
       throw new Error(
         "Não foi possível criar a categoria nova. Tente outro nome.",
       );
@@ -290,7 +279,7 @@ const EntriesPage = () => {
         `${form.type === "income" ? "Receita" : "Despesa"} registrada.`,
       );
       // Mantém tipo e data: quem lança várias contas do mesmo dia não precisa
-      // preencher os mesmos campos de novo.
+      // preencher os mesmos campos de novo
       setForm({ ...EMPTY_FORM, type: form.type, date: form.date });
       await fetchData();
     } catch (error) {
@@ -356,7 +345,9 @@ const EntriesPage = () => {
       setEditing(null);
       await fetchData();
     } catch (error) {
-      toast.error(errorMessage(error, "Não foi possível salvar as alterações."));
+      toast.error(
+        errorMessage(error, "Não foi possível salvar as alterações."),
+      );
     } finally {
       setSaving(false);
     }
@@ -380,15 +371,14 @@ const EntriesPage = () => {
       setDeleting(null);
       await fetchData();
     } catch (error) {
-      toast.error(errorMessage(error, "Não foi possível excluir o lançamento."));
+      toast.error(
+        errorMessage(error, "Não foi possível excluir o lançamento."),
+      );
     }
   };
 
-  // ── Lançamentos fixos ────────────────────────────────────────────────────
-  // Um lançamento "fixo" é o molde; a API cria uma cópia dele por mês, marcada
-  // com parentId. Apagar uma cópia isolada não resolve nada, porque a próxima
-  // listagem a recria. Então a exclusão de uma cópia é oferecida como exclusão
-  // do fixo inteiro — e o diálogo diz isso com todas as letras.
+  // ── Lançamentos fixos ---//
+
   const parentOf = (entry: Entry) =>
     entry.parentId
       ? (entries.find((candidate) => candidate.id === entry.parentId) ?? null)
@@ -409,7 +399,6 @@ const EntriesPage = () => {
         subtitle="Registre o que entra e o que sai. O saldo é recalculado na hora."
       />
 
-      {/* ── Placar do período ─────────────────────────────────────────────── */}
       <section className="mb-7 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard
           label="Receitas"
@@ -443,7 +432,6 @@ const EntriesPage = () => {
       </section>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)]">
-        {/* ── Formulário ─────────────────────────────────────────────────── */}
         <section className="card h-fit p-6 lg:sticky lg:top-24">
           <h2 className="font-display text-lg font-semibold text-ink-900">
             Novo lançamento
@@ -565,29 +553,31 @@ const EntriesPage = () => {
               </div>
             )}
 
-            {form.type === "income" && availableGoals(form.goalId).length > 0 && (
-              <div className="animate-fade-in">
-                <label htmlFor="entry-goal" className="field-label">
-                  Guardar para uma meta
-                </label>
-                <select
-                  id="entry-goal"
-                  value={form.goalId}
-                  onChange={(e) => setField("goalId", e.target.value)}
-                  className="field"
-                >
-                  <option value="">Nenhuma meta</option>
-                  {availableGoals(form.goalId).map((goal) => (
-                    <option key={goal.id} value={goal.id}>
-                      {goal.title}
-                    </option>
-                  ))}
-                </select>
-                <p className="field-hint">
-                  O valor sai do seu saldo disponível e passa a contar como guardado nessa meta.
-                </p>
-              </div>
-            )}
+            {form.type === "income" &&
+              availableGoals(form.goalId).length > 0 && (
+                <div className="animate-fade-in">
+                  <label htmlFor="entry-goal" className="field-label">
+                    Guardar para uma meta
+                  </label>
+                  <select
+                    id="entry-goal"
+                    value={form.goalId}
+                    onChange={(e) => setField("goalId", e.target.value)}
+                    className="field"
+                  >
+                    <option value="">Nenhuma meta</option>
+                    {availableGoals(form.goalId).map((goal) => (
+                      <option key={goal.id} value={goal.id}>
+                        {goal.title}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="field-hint">
+                    O valor sai do seu saldo disponível e passa a contar como
+                    guardado nessa meta.
+                  </p>
+                </div>
+              )}
 
             <FixedToggle
               checked={form.isFixed}
@@ -609,7 +599,6 @@ const EntriesPage = () => {
           </form>
         </section>
 
-        {/* ── Histórico ──────────────────────────────────────────────────── */}
         <section className="card flex flex-col p-6">
           <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="font-display text-lg font-semibold text-ink-900">
@@ -620,7 +609,6 @@ const EntriesPage = () => {
             </p>
           </div>
 
-          {/* Filtros */}
           <div className="mb-5 flex flex-col gap-3">
             <div className="relative">
               <MdSearch
@@ -764,8 +752,10 @@ const EntriesPage = () => {
 
                                 {entry.isFixed && (
                                   <Badge tone="ocean" icon={<MdRepeat />}>
-                                    Fixo · dia {entry.fixedDay ?? new Date(entry.date).getUTCDate()} ·{" "}
-                                    {entry.repeatCount ?? 12}x
+                                    Fixo · dia{" "}
+                                    {entry.fixedDay ??
+                                      new Date(entry.date).getUTCDate()}{" "}
+                                    · {entry.repeatCount ?? 12}x
                                   </Badge>
                                 )}
                                 {parent && (
@@ -945,26 +935,27 @@ const EntriesPage = () => {
             </div>
           )}
 
-          {editForm.type === "income" && availableGoals(editForm.goalId).length > 0 && (
-            <div>
-              <label htmlFor="edit-entry-goal" className="field-label">
-                Guardar para uma meta
-              </label>
-              <select
-                id="edit-entry-goal"
-                value={editForm.goalId}
-                onChange={(e) => setEditField("goalId", e.target.value)}
-                className="field"
-              >
-                <option value="">Nenhuma meta</option>
-                {availableGoals(editForm.goalId).map((goal) => (
-                  <option key={goal.id} value={goal.id}>
-                    {goal.title}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+          {editForm.type === "income" &&
+            availableGoals(editForm.goalId).length > 0 && (
+              <div>
+                <label htmlFor="edit-entry-goal" className="field-label">
+                  Guardar para uma meta
+                </label>
+                <select
+                  id="edit-entry-goal"
+                  value={editForm.goalId}
+                  onChange={(e) => setEditField("goalId", e.target.value)}
+                  className="field"
+                >
+                  <option value="">Nenhuma meta</option>
+                  {availableGoals(editForm.goalId).map((goal) => (
+                    <option key={goal.id} value={goal.id}>
+                      {goal.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
           <FixedToggle
             checked={editForm.isFixed}
@@ -1007,11 +998,6 @@ const EntriesPage = () => {
   );
 };
 
-// ── Peças da tela ──────────────────────────────────────────────────────────
-
-/** Escolha entre despesa e receita. Um <select> escondia a decisão mais
- *  importante do formulário atrás de um clique; aqui ela é a primeira coisa
- *  visível, e a cor já antecipa o efeito no saldo. */
 function TypeToggle({
   value,
   onChange,
@@ -1191,14 +1177,6 @@ function Badge({
     </span>
   );
 }
-
-/**
- * Diálogo de exclusão.
- *
- * Antes, apagar uma repetição automática parecia funcionar e ela reaparecia na
- * próxima listagem — o app dizia uma coisa e fazia outra. Agora o diálogo
- * explica de onde a repetição vem e oferece a ação que realmente resolve.
- */
 function DeleteEntryDialog({
   entry,
   parent,

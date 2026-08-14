@@ -55,8 +55,6 @@ export function getGoalCompletionDetails(goal: Goal): GoalCompletion {
     return { isCompleted: false, completedDate: null, diffDays: 0, status: "none" };
   }
 
-  // Datas são dias de calendário gravados em UTC; comparar em UTC evita que o
-  // fuso local desloque a conclusão em um dia.
   const completed = new Date(completedEntry.date);
   const limit = new Date(goal.limitDate);
 

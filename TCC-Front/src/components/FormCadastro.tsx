@@ -22,7 +22,6 @@ const STRENGTH_LEVELS = [
   { label: "Forte", bar: "w-full bg-emerald-600", text: "text-emerald-700" },
 ];
 
-/** Força da senha: comprimento, letras, números e símbolos. Só orienta — não bloqueia. */
 function passwordStrength(password: string) {
   let score = 0;
   if (password.length >= 6) score++;
@@ -30,7 +29,9 @@ function passwordStrength(password: string) {
   if (/[a-zA-Z]/.test(password) && /\d/.test(password)) score++;
   if (/[^a-zA-Z0-9]/.test(password)) score++;
 
-  return STRENGTH_LEVELS[Math.max(0, Math.min(score, STRENGTH_LEVELS.length) - 1)];
+  return STRENGTH_LEVELS[
+    Math.max(0, Math.min(score, STRENGTH_LEVELS.length) - 1)
+  ];
 }
 
 const FormCadastro = () => {
@@ -47,12 +48,12 @@ const FormCadastro = () => {
 
   const strength = useMemo(() => passwordStrength(password), [password]);
 
-  // Validações em tempo real: o usuário descobre o problema enquanto digita,
-  // e não só depois de clicar em "Criar conta".
   const emailInvalid = email.length > 0 && !EMAIL_REGEX.test(email);
   const passwordShort = password.length > 0 && password.length < 6;
-  const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword;
-  const passwordsDiffer = confirmPassword.length > 0 && password !== confirmPassword;
+  const passwordsMatch =
+    confirmPassword.length > 0 && password === confirmPassword;
+  const passwordsDiffer =
+    confirmPassword.length > 0 && password !== confirmPassword;
 
   const canSubmit =
     name.trim().length > 0 &&
@@ -75,7 +76,11 @@ const FormCadastro = () => {
       const response = await fetch(`${API_URL}/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), email: email.trim(), password }),
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          password,
+        }),
       });
 
       if (!response.ok) {
@@ -113,7 +118,10 @@ const FormCadastro = () => {
           Nome
         </label>
         <div className="relative">
-          <MdPerson aria-hidden className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400" />
+          <MdPerson
+            aria-hidden
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400"
+          />
           <input
             id="name"
             type="text"
@@ -132,7 +140,10 @@ const FormCadastro = () => {
           E-mail
         </label>
         <div className="relative">
-          <MdEmail aria-hidden className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400" />
+          <MdEmail
+            aria-hidden
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400"
+          />
           <input
             id="email"
             type="email"
@@ -145,7 +156,11 @@ const FormCadastro = () => {
             className={`field pl-11 ${emailInvalid ? "border-rose-300 focus:border-rose-500 focus:ring-rose-500/15" : ""}`}
           />
         </div>
-        {emailInvalid && <p className="mt-1.5 text-xs text-rose-600">Formato de e-mail inválido.</p>}
+        {emailInvalid && (
+          <p className="mt-1.5 text-xs text-rose-600">
+            Formato de e-mail inválido.
+          </p>
+        )}
       </div>
 
       <div>
@@ -153,7 +168,10 @@ const FormCadastro = () => {
           Senha
         </label>
         <div className="relative">
-          <MdLock aria-hidden className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400" />
+          <MdLock
+            aria-hidden
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400"
+          />
           <input
             id="senha"
             type={showPassword ? "text" : "password"}
@@ -178,9 +196,13 @@ const FormCadastro = () => {
         {password && (
           <div className="mt-2 flex items-center gap-2.5">
             <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-ink-100">
-              <span className={`block h-full rounded-full transition-all duration-300 ${strength.bar}`} />
+              <span
+                className={`block h-full rounded-full transition-all duration-300 ${strength.bar}`}
+              />
             </span>
-            <span className={`shrink-0 text-xs font-semibold ${strength.text}`}>{strength.label}</span>
+            <span className={`shrink-0 text-xs font-semibold ${strength.text}`}>
+              {strength.label}
+            </span>
           </div>
         )}
       </div>
@@ -190,7 +212,10 @@ const FormCadastro = () => {
           Repetir senha
         </label>
         <div className="relative">
-          <MdLock aria-hidden className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400" />
+          <MdLock
+            aria-hidden
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400"
+          />
           <input
             id="confirmPassword"
             type={showPassword ? "text" : "password"}
@@ -201,17 +226,30 @@ const FormCadastro = () => {
             required
             aria-invalid={passwordsDiffer}
             className={`field pl-11 pr-11 ${
-              passwordsDiffer ? "border-rose-300 focus:border-rose-500 focus:ring-rose-500/15" : ""
+              passwordsDiffer
+                ? "border-rose-300 focus:border-rose-500 focus:ring-rose-500/15"
+                : ""
             } ${passwordsMatch ? "border-emerald-300" : ""}`}
           />
           {passwordsMatch && (
-            <MdCheck aria-hidden className="absolute right-3.5 top-1/2 -translate-y-1/2 text-emerald-600" />
+            <MdCheck
+              aria-hidden
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-emerald-600"
+            />
           )}
         </div>
-        {passwordsDiffer && <p className="mt-1.5 text-xs text-rose-600">As senhas não são iguais.</p>}
+        {passwordsDiffer && (
+          <p className="mt-1.5 text-xs text-rose-600">
+            As senhas não são iguais.
+          </p>
+        )}
       </div>
 
-      <button type="submit" disabled={loading} className="btn-primary mt-1 py-3">
+      <button
+        type="submit"
+        disabled={loading}
+        className="btn-primary mt-1 py-3"
+      >
         {loading ? "Criando conta…" : "Criar minha conta"}
       </button>
 

@@ -1,5 +1,4 @@
 // Logotipo da GranaFy.
-//
 
 import GranaFyLogo from "../assets/GranaFy.png";
 
@@ -12,15 +11,16 @@ const SIZES = {
 } as const;
 
 type LogoProps = {
-  /** Altura renderizada do logotipo. */
   size?: keyof typeof SIZES;
-  /** Coloca o logo sobre uma placa branca — necessário em fundos escuros,
-   *  já que o "Grana" azul do logotipo some sobre o verde da marca. */
   plate?: boolean;
   className?: string;
 };
 
-export default function Logo({ size = "md", plate = false, className = "" }: LogoProps) {
+export default function Logo({
+  size = "md",
+  plate = false,
+  className = "",
+}: LogoProps) {
   const height = SIZES[size];
   const width = Math.round(height * ASPECT);
 
@@ -35,7 +35,8 @@ export default function Logo({ size = "md", plate = false, className = "" }: Log
     />
   );
 
-  if (!plate) return <span className={`inline-flex shrink-0 ${className}`}>{image}</span>;
+  if (!plate)
+    return <span className={`inline-flex shrink-0 ${className}`}>{image}</span>;
 
   return (
     <span

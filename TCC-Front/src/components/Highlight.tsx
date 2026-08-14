@@ -1,12 +1,4 @@
 // Destaque de palavras-chave.
-//
-// É o elemento de assinatura visual do GranaFy: um traço de marca-texto que
-// "risca" a palavra importante da frase, como quem marca um valor num extrato.
-// Usa <mark>, que é exatamente o elemento semântico para "texto destacado por
-// relevância" — leitores de tela e busca do navegador entendem o destaque.
-//
-// Regra de uso: no máximo UMA marcação por frase. O destaque só funciona
-// enquanto for raro; se tudo é destaque, nada é.
 
 import type { ReactNode } from "react";
 
@@ -14,14 +6,16 @@ type Tone = "money" | "plan" | "out" | "warn";
 type Variant = "marker" | "underline" | "gradient";
 
 const MARKER: Record<Tone, string> = {
-  money: "bg-gradient-to-r from-emerald-300/70 via-emerald-200/80 to-emerald-300/50",
+  money:
+    "bg-gradient-to-r from-emerald-300/70 via-emerald-200/80 to-emerald-300/50",
   plan: "bg-gradient-to-r from-ocean-200/80 via-ocean-100/90 to-ocean-200/60",
   out: "bg-gradient-to-r from-rose-200/80 via-rose-100/90 to-rose-200/60",
   warn: "bg-gradient-to-r from-amber-200/80 via-amber-100/90 to-amber-200/60",
 };
 
 const MARKER_ON_DARK: Record<Tone, string> = {
-  money: "bg-gradient-to-r from-emerald-400/45 via-emerald-300/35 to-emerald-400/20",
+  money:
+    "bg-gradient-to-r from-emerald-400/45 via-emerald-300/35 to-emerald-400/20",
   plan: "bg-gradient-to-r from-ocean-400/45 via-ocean-300/35 to-ocean-400/20",
   out: "bg-gradient-to-r from-rose-400/45 via-rose-300/35 to-rose-400/20",
   warn: "bg-gradient-to-r from-amber-400/45 via-amber-300/35 to-amber-400/20",
@@ -45,7 +39,6 @@ type HighlightProps = {
   children: ReactNode;
   tone?: Tone;
   variant?: Variant;
-  /** Ajusta as cores para fundos escuros. */
   onDark?: boolean;
   className?: string;
 };
@@ -69,7 +62,9 @@ export default function Highlight({
 
   if (variant === "underline") {
     return (
-      <mark className={`relative inline-block bg-transparent ${onDark ? "text-white" : "text-ink-900"} ${className}`}>
+      <mark
+        className={`relative inline-block bg-transparent ${onDark ? "text-white" : "text-ink-900"} ${className}`}
+      >
         <span className="relative z-10">{children}</span>
         <span
           aria-hidden

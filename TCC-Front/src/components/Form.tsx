@@ -1,6 +1,12 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { MdEmail, MdLock, MdVisibility, MdVisibilityOff, MdErrorOutline } from "react-icons/md";
+import {
+  MdEmail,
+  MdLock,
+  MdVisibility,
+  MdVisibilityOff,
+  MdErrorOutline,
+} from "react-icons/md";
 import API_URL from "../services/api";
 import { errorMessage } from "../utils/errors";
 
@@ -38,8 +44,6 @@ const Form = () => {
 
       navigate("/");
     } catch (err) {
-      // Falha de rede não é credencial errada — dizer isso poupa o usuário de
-      // tentar a senha várias vezes achando que errou.
       setError(errorMessage(err, "E-mail ou senha não conferem."));
     } finally {
       setLoading(false);
@@ -67,7 +71,10 @@ const Form = () => {
           E-mail
         </label>
         <div className="relative">
-          <MdEmail aria-hidden className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400" />
+          <MdEmail
+            aria-hidden
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400"
+          />
           <input
             id="email"
             type="email"
@@ -86,7 +93,10 @@ const Form = () => {
           Senha
         </label>
         <div className="relative">
-          <MdLock aria-hidden className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400" />
+          <MdLock
+            aria-hidden
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400"
+          />
           <input
             id="senha"
             type={showPassword ? "text" : "password"}
@@ -108,7 +118,11 @@ const Form = () => {
         </div>
       </div>
 
-      <button type="submit" disabled={loading} className="btn-primary mt-1 py-3">
+      <button
+        type="submit"
+        disabled={loading}
+        className="btn-primary mt-1 py-3"
+      >
         {loading ? "Entrando…" : "Entrar"}
       </button>
 

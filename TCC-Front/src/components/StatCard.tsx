@@ -1,7 +1,4 @@
 // Cartão de indicador — o "placar" que abre as telas de resumo.
-//
-// O valor usa Sora com dígitos tabulares: assim os números de cartões vizinhos
-// alinham na vertical, como num extrato bancário.
 
 import type { ReactNode } from "react";
 

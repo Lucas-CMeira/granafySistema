@@ -45,11 +45,9 @@ const Navbar = () => {
 
   return (
     <nav className="sticky top-0 z-40 w-full bg-ink-950">
-      {/* Fio do gradiente da marca — o azul e o verde do logotipo. */}
       <span aria-hidden className="block h-0.5 w-full bg-brand-gradient" />
 
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 md:px-6">
-        {/* Placa branca: sobre fundo escuro, o "Grana" azul do logo sumia. */}
         <Logo size="sm" plate />
 
         <div className="ml-2 hidden flex-1 items-center gap-1.5 md:flex">
@@ -70,7 +68,6 @@ const Navbar = () => {
           Sair
         </button>
 
-        {/* Menu compacto */}
         <button
           type="button"
           onClick={() => setMenuOpen((open) => !open)}
@@ -78,7 +75,11 @@ const Navbar = () => {
           aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
           className="ml-auto rounded-xl bg-white/10 p-2.5 text-white transition hover:bg-white/20 md:hidden"
         >
-          {menuOpen ? <MdClose className="text-xl" /> : <MdMenu className="text-xl" />}
+          {menuOpen ? (
+            <MdClose className="text-xl" />
+          ) : (
+            <MdMenu className="text-xl" />
+          )}
         </button>
       </div>
 

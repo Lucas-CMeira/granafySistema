@@ -1,19 +1,18 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
       fontFamily: {
-        // Sora: títulos e valores monetários. Geométrica, com números largos e legíveis.
         display: ['"Sora Variable"', "Sora", "system-ui", "sans-serif"],
-        // Plus Jakarta Sans: textos, labels e formulários. Humanista e confortável em pt-BR.
-        sans: ['"Plus Jakarta Sans Variable"', '"Plus Jakarta Sans"', "system-ui", "sans-serif"],
+        sans: [
+          '"Plus Jakarta Sans Variable"',
+          '"Plus Jakarta Sans"',
+          "system-ui",
+          "sans-serif",
+        ],
       },
       colors: {
-        // Neutro esverdeado da marca — substitui o slate padrão para dar temperatura ao tema.
         ink: {
           50: "#F4F8F7",
           100: "#E5EFEC",
@@ -27,7 +26,6 @@ export default {
           900: "#0F211E",
           950: "#071412",
         },
-        // Azul do logotipo — domínio de "planejamento" (metas, projeções).
         ocean: {
           50: "#EEF5FF",
           100: "#D9E9FF",
@@ -43,7 +41,8 @@ export default {
       },
       boxShadow: {
         card: "0 1px 2px rgba(15, 33, 30, 0.04), 0 8px 24px -12px rgba(15, 33, 30, 0.14)",
-        "card-lg": "0 2px 4px rgba(15, 33, 30, 0.05), 0 24px 48px -24px rgba(15, 33, 30, 0.24)",
+        "card-lg":
+          "0 2px 4px rgba(15, 33, 30, 0.05), 0 24px 48px -24px rgba(15, 33, 30, 0.24)",
         pop: "0 24px 64px -20px rgba(15, 33, 30, 0.35)",
       },
       keyframes: {
@@ -82,4 +81,4 @@ export default {
     },
   },
   plugins: [],
-}
+};

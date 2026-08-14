@@ -1,9 +1,4 @@
 // Contexto e hook dos avisos.
-//
-// Ficam separados do <ToastProvider> de propósito: o Fast Refresh do Vite só
-// consegue preservar o estado de um arquivo quando ele exporta apenas
-// componentes. Misturar o provider com o hook fazia o app inteiro recarregar a
-// cada edição no Toast.tsx (regra react-refresh/only-export-components).
 
 import { createContext, useContext } from "react";
 

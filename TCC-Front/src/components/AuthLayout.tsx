@@ -1,8 +1,5 @@
 // Moldura das telas de login e cadastro.
-//
-// O painel da esquerda mostra o próprio artefato do produto — um extrato, com
-// as mesmas cores, marcadores de categoria e números tabulares das telas
-// internas. Quem ainda não entrou já vê como o app organiza o dinheiro.
+//Template (layout padrao para telas de login e cadastro)
 
 import type { ReactNode } from "react";
 import Logo from "./Logo";

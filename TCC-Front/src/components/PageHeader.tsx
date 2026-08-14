@@ -9,7 +9,12 @@ type PageHeaderProps = {
   action?: ReactNode;
 };
 
-export default function PageHeader({ eyebrow, title, subtitle, action }: PageHeaderProps) {
+export default function PageHeader({
+  eyebrow,
+  title,
+  subtitle,
+  action,
+}: PageHeaderProps) {
   return (
     <header className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="animate-fade-up">
@@ -20,7 +25,9 @@ export default function PageHeader({ eyebrow, title, subtitle, action }: PageHea
         <h1 className="font-display text-3xl font-bold leading-tight text-ink-900 text-balance sm:text-[2.1rem]">
           {title}
         </h1>
-        <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink-500">{subtitle}</p>
+        <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink-500">
+          {subtitle}
+        </p>
       </div>
 
       {action && <div className="shrink-0">{action}</div>}

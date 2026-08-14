@@ -39,7 +39,12 @@ import {
 } from "../../utils/goals";
 import type { Goal } from "../../utils/goals";
 
-const EMPTY_FORM = { title: "", displayValue: "", limitDate: "", description: "" };
+const EMPTY_FORM = {
+  title: "",
+  displayValue: "",
+  limitDate: "",
+  description: "",
+};
 type FormState = typeof EMPTY_FORM;
 
 const GoalsPage = () => {
@@ -57,16 +62,22 @@ const GoalsPage = () => {
   const setField = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((current) => ({ ...current, [key]: value }));
 
-  const setEditField = <K extends keyof FormState>(key: K, value: FormState[K]) =>
-    setEditForm((current) => ({ ...current, [key]: value }));
+  const setEditField = <K extends keyof FormState>(
+    key: K,
+    value: FormState[K],
+  ) => setEditForm((current) => ({ ...current, [key]: value }));
 
   const fetchGoals = async () => {
     try {
-      const response = await fetch(`${API_URL}/goals`, { credentials: "include" });
+      const response = await fetch(`${API_URL}/goals`, {
+        credentials: "include",
+      });
       if (response.ok) setGoals(await response.json());
     } catch (error) {
       console.error(error);
-      toast.error("Não foi possível carregar suas metas. Verifique se a API está no ar.");
+      toast.error(
+        "Não foi possível carregar suas metas. Verifique se a API está no ar.",
+      );
     } finally {
       setLoading(false);
     }
@@ -88,16 +99,23 @@ const GoalsPage = () => {
   }, [goals]);
 
   const summary = useMemo(() => {
-    const saved = goals.reduce((total, goal) => total + Math.min(sumSavedEntries(goal.entries), goal.value), 0);
+    const saved = goals.reduce(
+      (total, goal) =>
+        total + Math.min(sumSavedEntries(goal.entries), goal.value),
+      0,
+    );
     const target = goals.reduce((total, goal) => total + goal.value, 0);
-    const completed = goals.filter((goal) => sumSavedEntries(goal.entries) >= goal.value).length;
+    const completed = goals.filter(
+      (goal) => sumSavedEntries(goal.entries) >= goal.value,
+    ).length;
 
     return { saved, target, completed, active: goals.length - completed };
   }, [goals]);
 
   const validate = (state: FormState): string | null => {
     if (!state.title.trim()) return "Dê um nome à meta.";
-    if (parseCurrency(state.displayValue) <= 0) return "Informe um valor objetivo maior que zero.";
+    if (parseCurrency(state.displayValue) <= 0)
+      return "Informe um valor objetivo maior que zero.";
     if (!state.limitDate) return "Escolha a data limite da meta.";
     return null;
   };
@@ -176,14 +194,18 @@ const GoalsPage = () => {
 
       if (!response.ok) {
         const data = await response.json().catch(() => null);
-        throw new Error(data?.message || "Não foi possível salvar as alterações.");
+        throw new Error(
+          data?.message || "Não foi possível salvar as alterações.",
+        );
       }
 
       toast.success("Meta atualizada.");
       setEditing(null);
       await fetchGoals();
     } catch (error) {
-      toast.error(errorMessage(error, "Não foi possível salvar as alterações."));
+      toast.error(
+        errorMessage(error, "Não foi possível salvar as alterações."),
+      );
     } finally {
       setSaving(false);
     }
@@ -229,7 +251,11 @@ const GoalsPage = () => {
           value={summary.active}
           tone="plan"
           icon={<MdFlag />}
-          hint={summary.completed > 0 ? `${summary.completed} já concluída${summary.completed === 1 ? "" : "s"}` : "Nenhuma concluída ainda"}
+          hint={
+            summary.completed > 0
+              ? `${summary.completed} já concluída${summary.completed === 1 ? "" : "s"}`
+              : "Nenhuma concluída ainda"
+          }
         />
         <StatCard
           label="Objetivo total"
@@ -255,8 +281,12 @@ const GoalsPage = () => {
         {/* ── Formulário ─────────────────────────────────────────────────── */}
         <div className="flex flex-col gap-4 lg:sticky lg:top-24 lg:h-fit">
           <section className="card p-6">
-            <h2 className="font-display text-lg font-semibold text-ink-900">Nova meta</h2>
-            <p className="mb-5 mt-0.5 text-sm text-ink-500">O que você quer conquistar?</p>
+            <h2 className="font-display text-lg font-semibold text-ink-900">
+              Nova meta
+            </h2>
+            <p className="mb-5 mt-0.5 text-sm text-ink-500">
+              O que você quer conquistar?
+            </p>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <div>
@@ -287,7 +317,9 @@ const GoalsPage = () => {
                     type="text"
                     inputMode="numeric"
                     value={form.displayValue}
-                    onChange={(e) => setField("displayValue", formatCurrency(e.target.value))}
+                    onChange={(e) =>
+                      setField("displayValue", formatCurrency(e.target.value))
+                    }
                     required
                     placeholder="0,00"
                     className="field tnum py-3.5 pl-12 font-display text-xl font-bold text-ocean-700"
@@ -313,7 +345,11 @@ const GoalsPage = () => {
                   <p className="field-hint animate-fade-in text-ocean-700">
                     Dá{" "}
                     <strong className="tnum">
-                      R$ {formatMoney(parseCurrency(form.displayValue) / monthsUntil(form.limitDate))}
+                      R${" "}
+                      {formatMoney(
+                        parseCurrency(form.displayValue) /
+                          monthsUntil(form.limitDate),
+                      )}
                     </strong>{" "}
                     por mês até lá.
                   </p>
@@ -322,7 +358,10 @@ const GoalsPage = () => {
 
               <div>
                 <label htmlFor="goal-description" className="field-label">
-                  Descrição <span className="font-normal normal-case tracking-normal text-ink-400">(opcional)</span>
+                  Descrição{" "}
+                  <span className="font-normal normal-case tracking-normal text-ink-400">
+                    (opcional)
+                  </span>
                 </label>
                 <input
                   id="goal-description"
@@ -334,7 +373,12 @@ const GoalsPage = () => {
                 />
               </div>
 
-              <button type="submit" id="goal-submit" disabled={saving} className="btn-primary mt-1 py-3">
+              <button
+                type="submit"
+                id="goal-submit"
+                disabled={saving}
+                className="btn-primary mt-1 py-3"
+              >
                 {saving ? "Criando…" : "Criar meta"}
               </button>
             </form>
@@ -348,9 +392,10 @@ const GoalsPage = () => {
             </p>
             <p className="text-sm leading-relaxed text-ocean-900/80">
               Ao registrar uma <strong>receita</strong> em Lançamentos, escolha{" "}
-              <em>“Guardar para uma meta”</em>. O valor sai do seu saldo disponível e vai para essa
-              “caixinha” — como no Nubank, ele continua seu, só fica separado até a meta ser
-              concluída ou desvinculada.
+              <em>“Guardar para uma meta”</em>. O valor sai do seu saldo
+              disponível e vai para essa “caixinha” — como no Nubank, ele
+              continua seu, só fica separado até a meta ser concluída ou
+              desvinculada.
             </p>
           </aside>
         </div>
@@ -358,7 +403,9 @@ const GoalsPage = () => {
         {/* ── Lista de metas ─────────────────────────────────────────────── */}
         <section className="card p-6">
           <div className="mb-5 flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="font-display text-lg font-semibold text-ink-900">Suas metas</h2>
+            <h2 className="font-display text-lg font-semibold text-ink-900">
+              Suas metas
+            </h2>
             {goals.length > 0 && (
               <p className="text-sm text-ink-400">
                 {goals.length} meta{goals.length === 1 ? "" : "s"}
@@ -369,7 +416,10 @@ const GoalsPage = () => {
           {loading ? (
             <div className="flex flex-col gap-4">
               {[0, 1, 2].map((index) => (
-                <div key={index} className="rounded-2xl border border-ink-100 p-5">
+                <div
+                  key={index}
+                  className="rounded-2xl border border-ink-100 p-5"
+                >
                   <SkeletonLine className="h-4 w-1/3" />
                   <SkeletonLine className="mt-3 h-2.5 w-full rounded-full" />
                   <SkeletonLine className="mt-3 h-3 w-1/2" />
@@ -399,7 +449,11 @@ const GoalsPage = () => {
       </div>
 
       {/* ── Modal de edição ─────────────────────────────────────────────── */}
-      <Modal open={Boolean(editing)} onClose={() => setEditing(null)} title="Editar meta">
+      <Modal
+        open={Boolean(editing)}
+        onClose={() => setEditing(null)}
+        title="Editar meta"
+      >
         <form onSubmit={handleUpdate} className="flex flex-col gap-4 p-6">
           <div>
             <label htmlFor="edit-goal-title" className="field-label">
@@ -429,7 +483,9 @@ const GoalsPage = () => {
                   type="text"
                   inputMode="numeric"
                   value={editForm.displayValue}
-                  onChange={(e) => setEditField("displayValue", formatCurrency(e.target.value))}
+                  onChange={(e) =>
+                    setEditField("displayValue", formatCurrency(e.target.value))
+                  }
                   required
                   className="field tnum pl-11 font-semibold"
                 />
@@ -452,7 +508,10 @@ const GoalsPage = () => {
 
           <div>
             <label htmlFor="edit-goal-description" className="field-label">
-              Descrição <span className="font-normal normal-case tracking-normal text-ink-400">(opcional)</span>
+              Descrição{" "}
+              <span className="font-normal normal-case tracking-normal text-ink-400">
+                (opcional)
+              </span>
             </label>
             <input
               id="edit-goal-description"
@@ -465,19 +524,25 @@ const GoalsPage = () => {
           </div>
 
           <div className="mt-1 flex gap-3">
-            <button type="button" onClick={() => setEditing(null)} className="btn-ghost flex-1">
+            <button
+              type="button"
+              onClick={() => setEditing(null)}
+              className="btn-ghost flex-1"
+            >
               Cancelar
             </button>
-            <button type="submit" id="edit-goal-submit" disabled={saving} className="btn-primary flex-1">
+            <button
+              type="submit"
+              id="edit-goal-submit"
+              disabled={saving}
+              className="btn-primary flex-1"
+            >
               {saving ? "Salvando…" : "Salvar alterações"}
             </button>
           </div>
         </form>
       </Modal>
 
-      {/* ── Modal de exclusão ───────────────────────────────────────────── */}
-      {/* Antes existiam dois caminhos diferentes para excluir a mesma meta (um
-          dentro do modal de edição, outro na lista). Agora é só este. */}
       <Modal
         open={Boolean(deleting)}
         onClose={() => setDeleting(null)}
@@ -486,16 +551,27 @@ const GoalsPage = () => {
       >
         <div className="p-6">
           <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3.5">
-            <MdWarningAmber aria-hidden className="mt-0.5 shrink-0 text-lg text-amber-600" />
+            <MdWarningAmber
+              aria-hidden
+              className="mt-0.5 shrink-0 text-lg text-amber-600"
+            />
             <p className="text-sm leading-relaxed text-amber-900">
               As receitas atreladas a esta meta{" "}
-              <strong>continuam no seu histórico e voltam a contar no seu saldo disponível</strong>.
-              Elas apenas deixam de contar como progresso da meta — nenhum valor é perdido.
+              <strong>
+                continuam no seu histórico e voltam a contar no seu saldo
+                disponível
+              </strong>
+              . Elas apenas deixam de contar como progresso da meta — nenhum
+              valor é perdido.
             </p>
           </div>
 
           <div className="mt-6 flex gap-3">
-            <button type="button" onClick={() => setDeleting(null)} className="btn-ghost flex-1">
+            <button
+              type="button"
+              onClick={() => setDeleting(null)}
+              className="btn-ghost flex-1"
+            >
               Cancelar
             </button>
             <button
@@ -525,7 +601,8 @@ function GoalCard({
   onDelete: () => void;
 }) {
   const saved = sumSavedEntries(goal.entries);
-  const percent = goal.value > 0 ? Math.min(100, (saved / goal.value) * 100) : 0;
+  const percent =
+    goal.value > 0 ? Math.min(100, (saved / goal.value) * 100) : 0;
   const remaining = Math.max(0, goal.value - saved);
   const completion = getGoalCompletionDetails(goal);
   const isCompleted = completion.isCompleted || saved >= goal.value;
@@ -540,22 +617,26 @@ function GoalCard({
   const frame = isCompleted
     ? "border-emerald-200 bg-emerald-50/50"
     : overdue
-    ? "border-rose-200 bg-rose-50/40"
-    : "border-ink-100 hover:border-ocean-200";
+      ? "border-rose-200 bg-rose-50/40"
+      : "border-ink-100 hover:border-ocean-200";
 
   return (
     <article className={`rounded-2xl border p-5 transition ${frame}`}>
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-display text-base font-bold text-ink-900">{goal.title}</h3>
+            <h3 className="font-display text-base font-bold text-ink-900">
+              {goal.title}
+            </h3>
             {isCompleted && (
               <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold text-white">
                 <MdEmojiEvents /> Concluída
               </span>
             )}
           </div>
-          {goal.description && <p className="mt-0.5 text-xs text-ink-500">{goal.description}</p>}
+          {goal.description && (
+            <p className="mt-0.5 text-xs text-ink-500">{goal.description}</p>
+          )}
         </div>
 
         <div className="flex shrink-0 items-center gap-0.5">
@@ -580,17 +661,18 @@ function GoalCard({
         </div>
       </div>
 
-      {/* Valor guardado + objetivo */}
       <div className="mb-2.5 flex items-end justify-between gap-3">
         <p className="tnum font-display text-2xl font-bold leading-none text-ink-900">
           R$ {formatMoney(saved)}
         </p>
         <p className="tnum text-sm text-ink-400">
-          de <span className="font-semibold text-ink-600">R$ {formatMoney(goal.value)}</span>
+          de{" "}
+          <span className="font-semibold text-ink-600">
+            R$ {formatMoney(goal.value)}
+          </span>
         </p>
       </div>
 
-      {/* Barra de progresso */}
       <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-ink-100">
         <div
           className={`h-full rounded-full transition-all duration-700 ${
@@ -608,12 +690,17 @@ function GoalCard({
       </div>
 
       <div className="mt-2 flex items-center justify-between text-xs">
-        <span className={`font-bold ${isCompleted ? "text-emerald-700" : "text-ocean-700"}`}>
+        <span
+          className={`font-bold ${isCompleted ? "text-emerald-700" : "text-ocean-700"}`}
+        >
           {percent.toFixed(0)}%
         </span>
         {!isCompleted && (
           <span className="tnum text-ink-500">
-            faltam <strong className="text-ink-800">R$ {formatMoney(remaining)}</strong>
+            faltam{" "}
+            <strong className="text-ink-800">
+              R$ {formatMoney(remaining)}
+            </strong>
           </span>
         )}
       </div>
@@ -624,17 +711,24 @@ function GoalCard({
           <p className="flex items-start gap-2 text-xs leading-relaxed text-emerald-800">
             <MdEmojiEvents aria-hidden className="mt-px shrink-0 text-sm" />
             <span>
-              Concluída em <strong>{formatDate(completion.completedDate)}</strong>
-              {completion.status === "early" && ` — ${completion.diffDays} dia${completion.diffDays === 1 ? "" : "s"} antes do prazo.`}
+              Concluída em{" "}
+              <strong>{formatDate(completion.completedDate)}</strong>
+              {completion.status === "early" &&
+                ` — ${completion.diffDays} dia${completion.diffDays === 1 ? "" : "s"} antes do prazo.`}
               {completion.status === "on_time" && " — exatamente no prazo."}
-              {completion.status === "late" && ` — ${completion.diffDays} dia${completion.diffDays === 1 ? "" : "s"} depois do prazo.`}
+              {completion.status === "late" &&
+                ` — ${completion.diffDays} dia${completion.diffDays === 1 ? "" : "s"} depois do prazo.`}
             </span>
           </p>
         ) : (
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
             <p
               className={`flex items-center gap-1.5 text-xs font-semibold ${
-                overdue ? "text-rose-600" : urgent ? "text-amber-600" : "text-ink-500"
+                overdue
+                  ? "text-rose-600"
+                  : urgent
+                    ? "text-amber-600"
+                    : "text-ink-500"
               }`}
             >
               {overdue ? <MdWarningAmber /> : <MdEventAvailable />}

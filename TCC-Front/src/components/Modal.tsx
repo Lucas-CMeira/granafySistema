@@ -1,8 +1,4 @@
 // Caixa de diálogo compartilhada.
-//
-// Antes cada modal repetia a mesma marcação e nenhum deles fechava com Esc nem
-// clicando fora — a única saída era o "x". Aqui isso vem de graça, junto com o
-// bloqueio da rolagem do fundo e o foco inicial dentro do diálogo.
 
 import { useEffect, useRef } from "react";
 import type { ReactNode } from "react";
@@ -77,8 +73,12 @@ export default function Modal({
       >
         <div className="flex items-start justify-between gap-4 border-b border-ink-100 px-6 py-5">
           <div>
-            <h2 className="font-display text-lg font-semibold text-ink-900">{title}</h2>
-            {description && <p className="mt-0.5 text-sm text-ink-500">{description}</p>}
+            <h2 className="font-display text-lg font-semibold text-ink-900">
+              {title}
+            </h2>
+            {description && (
+              <p className="mt-0.5 text-sm text-ink-500">{description}</p>
+            )}
           </div>
           <button
             type="button"
