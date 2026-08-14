@@ -1,12 +1,14 @@
+// Regras de negocios lógico
+
 import { CategoriesRepository } from "./categories.repository"
 
 const DEFAULT_CATEGORIES = [
-    { name: "Alimentação",       color: "F59E0B" },
-    { name: "Salário",           color: "10B981" },
-    { name: "Pessoal",           color: "8B5CF6" },
-    { name: "Casa",              color: "3B82F6" },
-    { name: "Fatura do Cartão",  color: "EF4444" },
-    { name: "Outros",            color: "6B7280" },
+    { name: "Alimentação", color: "F59E0B" },
+    { name: "Salário", color: "10B981" },
+    { name: "Pessoal", color: "8B5CF6" },
+    { name: "Casa", color: "3B82F6" },
+    { name: "Fatura do Cartão", color: "EF4444" },
+    { name: "Outros", color: "6B7280" },
 ]
 
 export class CategoriesService {
@@ -34,13 +36,9 @@ export class CategoriesService {
         return await this.categoriesRepository.findAllByUserId(userId)
     }
 
-    /**
-     * Cria as categorias padrão para um usuário que ainda não possui nenhuma.
-     * Chamado automaticamente no primeiro acesso ao endpoint de listagem.
-     */
     async seedDefaultCategories(userId: string) {
         const existing = await this.categoriesRepository.findAllByUserId(userId)
-        if (existing.length > 0) return; // já tem categorias, não faz nada
+        if (existing.length > 0) return;
 
         for (const cat of DEFAULT_CATEGORIES) {
             await this.categoriesRepository.create({ name: cat.name, color: cat.color, userId })

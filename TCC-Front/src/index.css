@@ -13,7 +13,9 @@
 
   body {
     @apply font-sans text-ink-800 antialiased;
-    font-feature-settings: "cv05" 1, "ss01" 1;
+    font-feature-settings:
+      "cv05" 1,
+      "ss01" 1;
   }
 
   h1,
@@ -22,12 +24,10 @@
     @apply font-display tracking-tight;
   }
 
-  /* Foco visível e consistente em todo o app (acessibilidade por teclado). */
   :focus-visible {
     @apply outline-none ring-2 ring-emerald-500 ring-offset-2 ring-offset-white rounded-md;
   }
 
-  /* Ícone do seletor de data em cor de marca, não no cinza padrão do Chrome. */
   input[type="date"]::-webkit-calendar-picker-indicator {
     cursor: pointer;
     opacity: 0.45;
@@ -39,7 +39,6 @@
 }
 
 @layer components {
-  /* ── Campos de formulário ─────────────────────────────────────────────── */
   .field {
     @apply w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 text-sm text-ink-900
            placeholder:text-ink-400 transition
@@ -55,7 +54,6 @@
     @apply mt-1.5 text-xs text-ink-400;
   }
 
-  /* ── Botões ───────────────────────────────────────────────────────────── */
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold
            transition active:scale-[.985] disabled:pointer-events-none disabled:opacity-55;
@@ -73,14 +71,12 @@
     @apply btn bg-rose-600 text-white hover:bg-rose-700;
   }
 
-  /* ── Superfícies ──────────────────────────────────────────────────────── */
   .card {
     @apply rounded-2xl border border-ink-100 bg-white shadow-card;
   }
 }
 
 @layer utilities {
-  /* Valores monetários alinham em coluna: dígitos de largura fixa. */
   .tnum {
     font-variant-numeric: tabular-nums;
     font-feature-settings: "tnum" 1;
@@ -90,9 +86,13 @@
     text-wrap: balance;
   }
 
-  /* Gradiente da marca (azul → verde do logotipo). */
   .bg-brand-gradient {
-    background-image: linear-gradient(110deg, #1d5ce0 0%, #0e9f6e 55%, #4ade80 100%);
+    background-image: linear-gradient(
+      110deg,
+      #1d5ce0 0%,
+      #0e9f6e 55%,
+      #4ade80 100%
+    );
   }
 
   .scrollbar-none {
@@ -103,7 +103,6 @@
   }
 }
 
-/* Barra de rolagem discreta, alinhada ao tema da marca. */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -122,7 +121,6 @@
   background-color: rgb(157 191 184);
 }
 
-/* Respeita quem prefere menos movimento. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

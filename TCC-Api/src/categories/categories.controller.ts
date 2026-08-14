@@ -1,3 +1,5 @@
+// Recebe a requisição do cliente (front)
+
 import type { FastifyReply, FastifyRequest } from "fastify"
 import { CategoriesService } from "./categories.service"
 
@@ -32,7 +34,6 @@ export class CategoriesController {
             await request.jwtVerify();
             const { sub: userId } = request.user as { sub: string };
 
-            // Garante que usuários novos já tenham as categorias padrão
             await this.categoriesService.seedDefaultCategories(userId);
 
             const categories = await this.categoriesService.getCategories(userId);

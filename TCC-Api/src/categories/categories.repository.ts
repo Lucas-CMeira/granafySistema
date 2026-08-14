@@ -1,3 +1,5 @@
+// Acesso ao banco de dados
+
 import { prisma } from "../pluggins/prisma"
 
 export class CategoriesRepository {

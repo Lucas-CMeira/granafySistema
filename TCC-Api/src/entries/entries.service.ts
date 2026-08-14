@@ -13,7 +13,6 @@ export class EntriesService {
         private goalsRepository: GoalsRepository
     ) { }
 
-    /** Uma meta é concluída quando a soma das receitas atreladas atinge o valor objetivo. */
     private isGoalCompleted(goal: { value: number; entries?: { type: string; value: number }[] }) {
         const saved = (goal.entries || [])
             .filter((entry) => entry.type === "income")
@@ -85,8 +84,6 @@ export class EntriesService {
         if (isFixed) payload.isFixed = true;
         if (repeatCount) payload.repeatCount = repeatCount;
         if (parentId) payload.parentId = parentId;
-        // fixedDay não é definido aqui: getEntries() já cai para o dia da
-        // própria data do lançamento quando fixedDay está vazio.
 
         return await this.entriesRepository.create(payload);
     }
@@ -100,11 +97,6 @@ export class EntriesService {
             const startMonth = fixedEntryDate.getUTCMonth();
 
             const dayToUse = fixed.fixedDay || fixedEntryDate.getUTCDate();
-
-            // O total de ocorrências (original + repetições) é sempre o repeatCount
-            // escolhido — geradas de uma vez, sem depender de quantos meses já se
-            // passaram desde hoje. Assim o usuário já vê o calendário completo da
-            // repetição (ex: escolheu 6x, aparecem os 6 meses de uma vez).
             const totalMonths = fixed.repeatCount ?? 12;
 
             for (let i = 0; i < totalMonths; i++) {
@@ -192,10 +184,6 @@ export class EntriesService {
                 throw new Error("Meta não encontrada ou sem permissão");
             }
 
-            // Só bloqueia quando o lançamento está sendo atrelado a uma meta nova
-            // (ou a uma diferente da que já tinha). Editar outros campos de um
-            // lançamento que já pertence a essa meta não pode ser barrado por ela
-            // já estar concluída — foi essa própria soma que a completou.
             const isNewAttachment = data.goalId !== (entry as any).goalId;
             if (isNewAttachment && this.isGoalCompleted(goal)) {
                 throw new Error("Esta meta já foi concluída. Não é possível atrelar novos lançamentos a ela.");
@@ -218,16 +206,11 @@ export class EntriesService {
         if (data.isFixed !== undefined) updatePayload.isFixed = data.isFixed;
         if (data.repeatCount !== undefined) updatePayload.repeatCount = data.repeatCount;
 
-        // Sempre que o lançamento é (ou continua sendo) fixo, limpa fixedDay para
-        // que getEntries() volte a derivar o dia da própria data do lançamento —
-        // assim, editar a data também atualiza o dia em que as repetições caem.
         const effectiveIsFixed = data.isFixed !== undefined ? data.isFixed : (entry as any).isFixed;
         if (effectiveIsFixed) {
             updatePayload.fixedDay = null;
         }
 
-        // Se o tipo virou "expenses" e não veio um goalId explícito para limpar,
-        // desvincula qualquer meta anterior (regra: só receitas ficam atreladas a metas).
         if (effectiveType === "expenses" && data.goalId === undefined && (entry as any).goalId) {
             updatePayload.goalId = null;
         }

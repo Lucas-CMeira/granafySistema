@@ -1,3 +1,5 @@
+// Recebe as rotas e define os endpoints e repassa para o controller
+
 import type { FastifyInstance } from "fastify"
 import { CategoriesController } from "./categories.controller"
 import { CategoriesService } from "./categories.service"
