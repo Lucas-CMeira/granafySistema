@@ -244,7 +244,6 @@ const GoalsPage = () => {
         subtitle="Defina um objetivo, atrele suas receitas a ele e acompanhe o quanto já foi guardado."
       />
 
-      {/* ── Placar ────────────────────────────────────────────────────────── */}
       <section className="mb-7 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard
           label="Metas em andamento"
@@ -278,7 +277,6 @@ const GoalsPage = () => {
       </section>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)]">
-        {/* ── Formulário ─────────────────────────────────────────────────── */}
         <div className="flex flex-col gap-4 lg:sticky lg:top-24 lg:h-fit">
           <section className="card p-6">
             <h2 className="font-display text-lg font-semibold text-ink-900">
@@ -337,7 +335,6 @@ const GoalsPage = () => {
                   value={form.limitDate}
                   onChange={(e) => setField("limitDate", e.target.value)}
                   required
-                  // Uma meta que já nasce vencida não tem como ser acompanhada.
                   min={todayInputValue()}
                   className="field"
                 />
@@ -394,13 +391,14 @@ const GoalsPage = () => {
               Ao registrar uma <strong>receita</strong> em Lançamentos, escolha{" "}
               <em>“Guardar para uma meta”</em>. O valor sai do seu saldo
               disponível e vai para essa “caixinha” — como no Nubank, ele
-              continua seu, só fica separado até a meta ser concluída ou
-              desvinculada.
+              continua seu, só fica separado do saldo disponível até você
+              desvincular o lançamento. Quando a meta bate o valor objetivo,
+              ela é concluída e fica guardada no histórico — o dinheiro
+              permanece na caixinha, sem voltar a contar no saldo disponível.
             </p>
           </aside>
         </div>
 
-        {/* ── Lista de metas ─────────────────────────────────────────────── */}
         <section className="card p-6">
           <div className="mb-5 flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="font-display text-lg font-semibold text-ink-900">
@@ -448,7 +446,6 @@ const GoalsPage = () => {
         </section>
       </div>
 
-      {/* ── Modal de edição ─────────────────────────────────────────────── */}
       <Modal
         open={Boolean(editing)}
         onClose={() => setEditing(null)}
@@ -588,8 +585,6 @@ const GoalsPage = () => {
     </div>
   );
 };
-
-// ── Cartão de meta ─────────────────────────────────────────────────────────
 
 function GoalCard({
   goal,

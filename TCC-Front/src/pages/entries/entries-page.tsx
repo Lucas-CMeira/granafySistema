@@ -165,22 +165,23 @@ const EntriesPage = () => {
         ? entries
         : entries.filter((e) => monthKey(e.date) === period);
 
-    const income = scope
+    const rawIncome = scope
       .filter((e) => e.type === "income")
       .reduce((sum, e) => sum + e.value, 0);
     const expenses = scope
       .filter((e) => e.type === "expenses")
       .reduce((sum, e) => sum + e.value, 0);
-    // Receita atrelada a uma meta é uma "caixinha": ica guardada nela e não
-    // conta no saldo do período, só no saldo da meta.
+    // Receita atrelada a uma meta é uma "caixinha": fica guardada nela e não
+    // conta como receita do período, só no saldo da meta.
     const goalsIncome = scope
       .filter((e) => e.type === "income" && e.goalId)
       .reduce((sum, e) => sum + e.value, 0);
+    const income = rawIncome - goalsIncome;
 
     return {
       income,
       expenses,
-      balance: income - goalsIncome - expenses,
+      balance: income - expenses,
       count: scope.length,
     };
   }, [entries, period]);

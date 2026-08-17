@@ -5,7 +5,6 @@ export class AuthController {
 
     constructor(private authService: AuthService) { }
 
-    // Cadastro
     async register(request: FastifyRequest, reply: FastifyReply) {
 
         try {
@@ -33,7 +32,6 @@ export class AuthController {
         }
     }
 
-    // Login
     async login(request: FastifyRequest, reply: FastifyReply) {
 
         try {

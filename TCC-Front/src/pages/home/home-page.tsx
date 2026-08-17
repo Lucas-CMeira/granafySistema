@@ -97,7 +97,10 @@ const HomePage = () => {
         .filter((entry) => entry.type === type)
         .reduce((total, entry) => total + entry.value, 0);
 
-    const monthIncome = sum(monthEntries, "income");
+    const monthGoalsIncome = monthEntries
+      .filter((entry) => entry.type === "income" && entry.goalId)
+      .reduce((total, entry) => total + entry.value, 0);
+    const monthIncome = sum(monthEntries, "income") - monthGoalsIncome;
     const monthExpenses = sum(monthEntries, "expenses");
     const totalBalance = sum(entries, "income") - sum(entries, "expenses");
     const goalsBalance = entries
@@ -179,7 +182,6 @@ const HomePage = () => {
           value={`R$ ${formatMoney(finances.availableBalance)}`}
           featured
           icon={<MdAccountBalanceWallet />}
-          hint="Sem contar o que está guardado em metas"
         />
         <StatCard
           label="Guardado em metas"
