@@ -79,6 +79,12 @@ export class EntriesRepository {
         })
     }
 
+    async deleteChildEntriesFrom(parentId: string, fromDate: Date) {
+        return await prisma.entry.deleteMany({
+            where: { parentId, date: { gte: fromDate } }
+        })
+    }
+
     async delete(id: string, userId: string) {
         return await prisma.entry.delete({
             where: { id }

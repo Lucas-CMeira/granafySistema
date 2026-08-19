@@ -12,6 +12,8 @@ import {
   MdReceiptLong,
   MdAdd,
   MdArrowForward,
+  MdLightbulbOutline,
+  MdClose,
 } from "react-icons/md";
 import API_URL from "../../services/api";
 import {
@@ -22,20 +24,27 @@ import {
   categoryColor,
   categoryInitials,
   daysUntil,
+  monthsUntil,
 } from "../../utils/format";
 import StatCard from "../../components/StatCard";
 import Highlight from "../../components/Highlight";
 import EmptyState from "../../components/EmptyState";
 import { SkeletonRows, SkeletonLine } from "../../components/Skeleton";
+import { useToast } from "../../components/toast-context";
+import { errorMessage } from "../../utils/errors";
 
 type Entry = {
   id: string;
   title: string;
+  description?: string | null;
   value: number;
   type: "income" | "expenses";
   date: string;
+  categoryId?: string | null;
   category?: { name?: string; color?: string | null } | null;
   goalId?: string | null;
+  isFixed?: boolean;
+  parentId?: string | null;
 };
 
 type Goal = {
@@ -51,31 +60,43 @@ const savedInGoal = (goal: Goal) =>
     .filter((entry) => entry.type === "income")
     .reduce((total, entry) => total + Math.abs(Number(entry.value)), 0);
 
+const DISMISS_KEY = "granafy:dismissedGoalSuggestion";
+
 const HomePage = () => {
+  const toast = useToast();
+
   const [userName, setUserName] = useState("");
   const [entries, setEntries] = useState<Entry[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [depositingGoalId, setDepositingGoalId] = useState<string | null>(null);
+  const [dismissedGoalId, setDismissedGoalId] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem(DISMISS_KEY);
+    } catch {
+      return null;
+    }
+  });
+
+  const fetchData = async () => {
+    try {
+      const [userRes, entriesRes, goalsRes] = await Promise.all([
+        fetch(`${API_URL}/me`, { credentials: "include" }),
+        fetch(`${API_URL}/entries`, { credentials: "include" }),
+        fetch(`${API_URL}/goals`, { credentials: "include" }),
+      ]);
+
+      if (userRes.ok) setUserName((await userRes.json()).name);
+      if (entriesRes.ok) setEntries(await entriesRes.json());
+      if (goalsRes.ok) setGoals(await goalsRes.json());
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [userRes, entriesRes, goalsRes] = await Promise.all([
-          fetch(`${API_URL}/me`, { credentials: "include" }),
-          fetch(`${API_URL}/entries`, { credentials: "include" }),
-          fetch(`${API_URL}/goals`, { credentials: "include" }),
-        ]);
-
-        if (userRes.ok) setUserName((await userRes.json()).name);
-        if (entriesRes.ok) setEntries(await entriesRes.json());
-        if (goalsRes.ok) setGoals(await goalsRes.json());
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchData();
   }, []);
 
@@ -129,7 +150,113 @@ const HomePage = () => {
     [goals],
   );
 
+  const suggestion = useMemo(() => {
+    if (activeGoals.length === 0) return null;
+    const goal = activeGoals[0];
+    const remaining = Math.max(0, goal.value - savedInGoal(goal));
+    const monthlyPace = remaining / monthsUntil(goal.limitDate);
+    if (finances.availableBalance < monthlyPace - 0.005) return null;
+    return { goal, amount: Math.min(monthlyPace, finances.availableBalance) };
+  }, [activeGoals, finances.availableBalance]);
+
   const monthLabel = formatMonthLabel(new Date().toISOString());
+
+  const dismissSuggestion = (goalId: string) => {
+    setDismissedGoalId(goalId);
+    try {
+      localStorage.setItem(DISMISS_KEY, goalId);
+    } catch {}
+  };
+
+  const handleDeposit = async (goal: Goal, targetAmount: number) => {
+    const target = Math.min(targetAmount, finances.availableBalance);
+    if (target <= 0) return;
+
+    setDepositingGoalId(goal.id);
+    try {
+      const candidates = [...entries]
+        .filter((entry) => entry.type === "income" && !entry.goalId)
+        .sort(
+          (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+        );
+
+      const relink = async (
+        id: string,
+        extra: Record<string, unknown> = {},
+      ) => {
+        const response = await fetch(`${API_URL}/entries/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ goalId: goal.id, ...extra }),
+        });
+        if (!response.ok) {
+          const data = await response.json().catch(() => null);
+          throw new Error(data?.message || "Não foi possível guardar na meta.");
+        }
+      };
+
+      let remaining = target;
+      let moved = 0;
+
+      for (const entry of candidates) {
+        if (remaining <= 0.005) break;
+
+        if (entry.value <= remaining + 0.005) {
+          await relink(entry.id);
+          remaining -= entry.value;
+          moved += entry.value;
+          continue;
+        }
+
+        if (!entry.isFixed && !entry.parentId) {
+          const keep = entry.value - remaining;
+          await relink(entry.id, { value: remaining });
+
+          const createRes = await fetch(`${API_URL}/entries`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+              title: entry.title,
+              description: entry.description || undefined,
+              value: keep,
+              type: "income",
+              date: entry.date,
+              categoryId: entry.categoryId,
+            }),
+          });
+          if (!createRes.ok) {
+            const data = await createRes.json().catch(() => null);
+            throw new Error(
+              data?.message || "Não foi possível guardar na meta.",
+            );
+          }
+
+          moved += remaining;
+          remaining = 0;
+          break;
+        }
+      }
+
+      if (moved <= 0) {
+        toast.error("Não foi possível guardar na meta agora.");
+        return;
+      }
+
+      toast.success(
+        remaining > 0.005
+          ? `R$ ${formatMoney(moved)} guardados em "${goal.title}" — o restante não coube em um único lançamento.`
+          : `R$ ${formatMoney(moved)} guardados em "${goal.title}".`,
+      );
+      await fetchData();
+    } catch (error) {
+      toast.error(errorMessage(error, "Não foi possível guardar na meta."));
+      await fetchData();
+    } finally {
+      setDepositingGoalId(null);
+    }
+  };
 
   return (
     <div>
@@ -195,6 +322,44 @@ const HomePage = () => {
           }
         />
       </section>
+
+      {!loading && suggestion && dismissedGoalId !== suggestion.goal.id && (
+        <section className="relative mb-6 flex flex-col items-start justify-between gap-4 rounded-2xl border border-ocean-100 bg-ocean-50/70 p-5 pr-11 sm:flex-row sm:items-center sm:pr-12">
+          <button
+            type="button"
+            onClick={() => dismissSuggestion(suggestion.goal.id)}
+            title="Dispensar sugestão"
+            aria-label="Dispensar sugestão"
+            className="absolute right-3 top-3 rounded-lg p-1.5 text-ocean-400 transition hover:bg-ocean-100 hover:text-ocean-700"
+          >
+            <MdClose />
+          </button>
+          <div className="flex items-start gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ocean-100 text-lg text-ocean-700">
+              <MdLightbulbOutline />
+            </span>
+            <div>
+              <p className="font-display text-sm font-bold text-ocean-900">
+                Você tem R$ {formatMoney(finances.availableBalance)} disponíveis
+              </p>
+              <p className="mt-0.5 text-sm text-ocean-900/80">
+                Que tal guardar R$ {formatMoney(suggestion.amount)} este mês na
+                meta “{suggestion.goal.title}”?
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => handleDeposit(suggestion.goal, suggestion.amount)}
+            disabled={depositingGoalId === suggestion.goal.id}
+            className="btn-primary shrink-0"
+          >
+            {depositingGoalId === suggestion.goal.id
+              ? "Guardando…"
+              : `Guardar R$ ${formatMoney(suggestion.amount)}`}
+          </button>
+        </section>
+      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <section className="card p-6">

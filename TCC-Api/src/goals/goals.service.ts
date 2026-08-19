@@ -30,6 +30,13 @@ export class GoalsService {
         return await this.goalsRepository.findAllByUserId(userId)
     }
 
+    private isGoalCompleted(goal: { value: number; entries?: { type: string; value: number }[] }) {
+        const saved = (goal.entries || [])
+            .filter((entry) => entry.type === "income")
+            .reduce((total, entry) => total + Math.abs(Number(entry.value)), 0);
+        return saved >= goal.value;
+    }
+
     async updateGoal(
         id: string,
         userId: string,
@@ -42,6 +49,14 @@ export class GoalsService {
 
         if (data.value !== undefined && (isNaN(Number(data.value)) || Number(data.value) <= 0)) {
             throw new Error("O valor objetivo da meta deve ser maior que zero");
+        }
+
+        if (
+            data.value !== undefined &&
+            Number(data.value) < goal.value &&
+            this.isGoalCompleted(goal)
+        ) {
+            throw new Error("Esta meta já foi concluída. O valor objetivo só pode ser aumentado, não reduzido.");
         }
 
         if (data.limitDate !== undefined && isNaN(new Date(data.limitDate).getTime())) {

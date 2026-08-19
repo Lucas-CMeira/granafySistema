@@ -85,10 +85,8 @@ const GoalsPage = () => {
 
   useEffect(() => {
     fetchGoals();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Metas concluídas vão para o fim: o topo da lista é o que ainda pede ação.
   const sortedGoals = useMemo(() => {
     return [...goals].sort((a, b) => {
       const aDone = isGoalCompleted(a);
@@ -175,6 +173,16 @@ const GoalsPage = () => {
     const problem = validate(editForm);
     if (problem) {
       toast.error(problem);
+      return;
+    }
+
+    if (
+      isGoalCompleted(editing) &&
+      parseCurrency(editForm.displayValue) < editing.value
+    ) {
+      toast.error(
+        "Esta meta já foi concluída. O valor objetivo só pode ser aumentado, não reduzido.",
+      );
       return;
     }
 
@@ -381,7 +389,6 @@ const GoalsPage = () => {
             </form>
           </section>
 
-          {/* Como funciona */}
           <aside className="rounded-2xl border border-ocean-100 bg-ocean-50/70 p-5">
             <p className="mb-2 flex items-center gap-2 font-display text-sm font-bold text-ocean-900">
               <MdLightbulbOutline className="text-base" />
@@ -390,11 +397,11 @@ const GoalsPage = () => {
             <p className="text-sm leading-relaxed text-ocean-900/80">
               Ao registrar uma <strong>receita</strong> em Lançamentos, escolha{" "}
               <em>“Guardar para uma meta”</em>. O valor sai do seu saldo
-              disponível e vai para essa “caixinha” — como no Nubank, ele
-              continua seu, só fica separado do saldo disponível até você
-              desvincular o lançamento. Quando a meta bate o valor objetivo,
-              ela é concluída e fica guardada no histórico — o dinheiro
-              permanece na caixinha, sem voltar a contar no saldo disponível.
+              disponível e vai para essa “caixinha” Ficando separado do saldo
+              disponível até você desvincular o lançamento. Quando a meta bate o
+              valor objetivo, ela é concluída e fica guardada no histórico, o
+              dinheiro permanece na caixinha, sem voltar a contar no saldo
+              disponível.
             </p>
           </aside>
         </div>
@@ -487,6 +494,11 @@ const GoalsPage = () => {
                   className="field tnum pl-11 font-semibold"
                 />
               </div>
+              {editing && isGoalCompleted(editing) && (
+                <p className="field-hint">
+                  Meta concluída: só é possível aumentar o valor objetivo.
+                </p>
+              )}
             </div>
             <div>
               <label htmlFor="edit-goal-limit-date" className="field-label">
@@ -606,7 +618,6 @@ function GoalCard({
   const overdue = !isCompleted && days < 0;
   const urgent = !isCompleted && days >= 0 && days <= 14;
 
-  // Quanto guardar por mês para fechar a meta no prazo.
   const monthlyPace = remaining / monthsUntil(goal.limitDate);
 
   const frame = isCompleted
@@ -700,7 +711,6 @@ function GoalCard({
         )}
       </div>
 
-      {/* Rodapé: prazo e ritmo */}
       <div className="mt-4 border-t border-ink-100 pt-3.5">
         {isCompleted && completion.completedDate ? (
           <p className="flex items-start gap-2 text-xs leading-relaxed text-emerald-800">

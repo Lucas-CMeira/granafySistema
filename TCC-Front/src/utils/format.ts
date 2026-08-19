@@ -17,7 +17,6 @@ export function formatCurrencyBRL(value: number): string {
   return `R$ ${formatMoney(value)}`;
 }
 
-/** Versão curta para eixos de gráfico: "R$ 1,2 mil" / "R$ 3,4 mi". */
 export function formatMoneyCompact(value: number): string {
   const abs = Math.abs(value);
   if (abs >= 1_000_000) return `R$ ${(value / 1_000_000).toFixed(1).replace(".", ",")} mi`;
@@ -25,14 +24,12 @@ export function formatMoneyCompact(value: number): string {
   return `R$ ${Math.round(value)}`;
 }
 
-/** "06/08/2026" */
 export function formatDate(dateStr: string): string {
   const date = new Date(dateStr);
   if (isNaN(date.getTime())) return "—";
   return date.toLocaleDateString("pt-BR", { timeZone: "UTC" });
 }
 
-/** "6 ago" */
 export function formatDateShort(dateStr: string): string {
   const date = new Date(dateStr);
   if (isNaN(date.getTime())) return "—";
@@ -72,7 +69,6 @@ export function daysUntil(dateStr: string): number {
   return Math.round((targetUTC - todayUTC) / 86_400_000);
 }
 
-/** Texto amigável de prazo: "12 dias restantes", "Vence hoje", "Venceu há 3 dias". */
 export function deadlineLabel(dateStr: string): string {
   const days = daysUntil(dateStr);
   if (days === 0) return "Vence hoje";
@@ -82,7 +78,6 @@ export function deadlineLabel(dateStr: string): string {
   return `Venceu há ${Math.abs(days)} dias`;
 }
 
-/** Meses de calendário (mínimo 1) até a data limite — base do "ritmo mensal". */
 export function monthsUntil(dateStr: string): number {
   return Math.max(1, Math.ceil(daysUntil(dateStr) / 30));
 }

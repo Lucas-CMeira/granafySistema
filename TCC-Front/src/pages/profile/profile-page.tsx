@@ -100,6 +100,7 @@ const ProfilePage = () => {
     fetchData();
   }, []);
 
+  // lógica da Taxa de poupança
   const totals = useMemo(() => {
     const income = entries
       .filter((e) => e.type === "income")

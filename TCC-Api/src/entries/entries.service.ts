@@ -211,6 +211,22 @@ export class EntriesService {
             updatePayload.fixedDay = null;
         }
 
+        if (effectiveIsFixed && data.repeatCount !== undefined && data.repeatCount !== null) {
+            if (data.repeatCount < 1 || data.repeatCount > 12) {
+                throw new Error("Informe quantas vezes o lançamento deve se repetir (1 a 12 meses)");
+            }
+
+            // Reduzir a repetição não pode deixar para trás ocorrências já geradas
+            // além da nova quantidade — elas são excluídas, mantendo só as que
+            // ainda cabem no novo total.
+            const effectiveDate = data.date !== undefined ? new Date(data.date) : new Date((entry as any).date);
+            const startYear = effectiveDate.getUTCFullYear();
+            const startMonth = effectiveDate.getUTCMonth();
+            const cutoff = new Date(Date.UTC(startYear, startMonth + data.repeatCount, 1));
+
+            await this.entriesRepository.deleteChildEntriesFrom(id, cutoff);
+        }
+
         if (effectiveType === "expenses" && data.goalId === undefined && (entry as any).goalId) {
             updatePayload.goalId = null;
         }
