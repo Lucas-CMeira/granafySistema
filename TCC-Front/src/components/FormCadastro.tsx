@@ -240,7 +240,7 @@ const FormCadastro = () => {
         </div>
         {passwordsDiffer && (
           <p className="mt-1.5 text-xs text-rose-600">
-            As senhas não são iguais.
+            As senhas estão incorretas
           </p>
         )}
       </div>
@@ -254,7 +254,7 @@ const FormCadastro = () => {
       </button>
 
       <p className="mt-1 text-center text-sm text-ink-500">
-        Já tem conta?{" "}
+        Já tem uma conta?{" "}
         <button
           type="button"
           onClick={() => navigate("/login")}

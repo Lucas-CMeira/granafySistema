@@ -556,7 +556,7 @@ const GoalsPage = () => {
         open={Boolean(deleting)}
         onClose={() => setDeleting(null)}
         size="sm"
-        title={deleting ? `Excluir “${deleting.title}”?` : ""}
+        title={deleting ? `Excluir “${deleting.title}” ?` : ""}
       >
         <div className="p-6">
           <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3.5">
@@ -568,10 +568,9 @@ const GoalsPage = () => {
               As receitas atreladas a esta meta{" "}
               <strong>
                 continuam no seu histórico e voltam a contar no seu saldo
-                disponível
+                disponível.
               </strong>
-              . Elas apenas deixam de contar como progresso da meta — nenhum
-              valor é perdido.
+              <p>Nenhum valor é perdido.</p>
             </p>
           </div>
 

@@ -81,7 +81,7 @@ export default function AuthLayout({
 
         <div className="relative z-10 my-12">
           <h2 className="max-w-lg font-display text-[2.6rem] font-bold leading-[1.1] text-balance animate-fade-up">
-            Saiba exatamente{" "}
+            Controle e Saiba exatamente{" "}
             <Highlight tone="money" onDark>
               para onde vai
             </Highlight>{" "}
@@ -101,7 +101,7 @@ export default function AuthLayout({
               <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-emerald-300/90">
                 Extrato do mês
               </p>
-              <p className="text-[11px] text-ink-300">Agosto</p>
+              <p className="text-[11px] text-ink-300"></p>
             </div>
 
             <ul className="flex flex-col divide-y divide-white/[0.07]">

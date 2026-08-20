@@ -87,7 +87,6 @@ const EntriesPage = () => {
   const [editForm, setEditForm] = useState<FormState>(EMPTY_FORM);
   const [deleting, setDeleting] = useState<Entry | null>(null);
 
-  // Filtros do histórico
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [period, setPeriod] = useState("all");
@@ -171,8 +170,6 @@ const EntriesPage = () => {
     const expenses = scope
       .filter((e) => e.type === "expenses")
       .reduce((sum, e) => sum + e.value, 0);
-    // Receita atrelada a uma meta é uma "caixinha": fica guardada nela e não
-    // conta como receita do período, só no saldo da meta.
     const goalsIncome = scope
       .filter((e) => e.type === "income" && e.goalId)
       .reduce((sum, e) => sum + e.value, 0);
@@ -279,8 +276,10 @@ const EntriesPage = () => {
       toast.success(
         `${form.type === "income" ? "Receita" : "Despesa"} registrada.`,
       );
+
       // Mantém tipo e data: quem lança várias contas do mesmo dia não precisa
       // preencher os mesmos campos de novo
+
       setForm({ ...EMPTY_FORM, type: form.type, date: form.date });
       await fetchData();
     } catch (error) {
@@ -394,10 +393,10 @@ const EntriesPage = () => {
         eyebrow="Movimentações"
         title={
           <>
-            Cada real <Highlight tone="money">anotado</Highlight>
+            Cada lançamento <Highlight tone="money">anotado</Highlight>
           </>
         }
-        subtitle="Registre o que entra e o que sai. O saldo é recalculado na hora."
+        subtitle="Registre o que entra e o que sai."
       />
 
       <section className="mb-7 grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -435,7 +434,7 @@ const EntriesPage = () => {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)]">
         <section className="card h-fit p-6 lg:sticky lg:top-24">
           <h2 className="font-display text-lg font-semibold text-ink-900">
-            Novo lançamento
+            Registre um lançamento!
           </h2>
           <p className="mb-5 mt-0.5 text-sm text-ink-500">
             Leva alguns segundos.
@@ -487,7 +486,7 @@ const EntriesPage = () => {
                 required
                 placeholder={
                   form.type === "income"
-                    ? "Ex: Salário de agosto"
+                    ? "Ex: Salário"
                     : "Ex: Supermercado"
                 }
                 className="field"
@@ -1063,8 +1062,6 @@ function FixedToggle({
   onRepeatCountChange: (times: string) => void;
   idPrefix: string;
 }) {
-  // O dia da repetição é sempre o dia do campo "Data" do formulário — não faz
-  // sentido pedir de novo aqui.
   const day = date ? Number(date.slice(8, 10)) : null;
 
   return (
@@ -1085,10 +1082,11 @@ function FixedToggle({
         <span>
           <span className="flex items-center gap-1.5 text-sm font-semibold text-ink-800">
             <MdRepeat className="text-ocean-600" />
-            Repetir todo mês
+            Repetir lançamento todo mês
           </span>
           <span className="mt-0.5 block text-xs text-ink-500">
-            Para contas que caem sempre — aluguel, assinatura, salário.
+            Para contas que caem sempre{" "}
+            <strong>aluguel, assinatura, salário.</strong>
           </span>
         </span>
       </label>
