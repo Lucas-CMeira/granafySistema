@@ -384,10 +384,10 @@ const HomePage = () => {
             <EmptyState
               icon={<MdReceiptLong />}
               title="Nada lançado ainda"
-              description="Registre sua primeira receita ou despesa para o saldo começar a fazer sentido."
+              description="Registre sua primeira receita ou despesa."
               action={
                 <Link to="/entries" className="btn-primary">
-                  <MdAdd /> Fazer o primeiro lançamento
+                  <MdAdd /> Fazer lançamento
                 </Link>
               }
             />
@@ -466,11 +466,11 @@ const HomePage = () => {
               tone="plan"
               icon={<MdFlag />}
               title={
-                goals.length === 0 ? "Nenhuma meta ainda" : "Tudo conquistado!"
+                goals.length === 0 ? "Nenhuma meta ainda" : "Metas Batidas!"
               }
               description={
                 goals.length === 0
-                  ? "Uma viagem, um curso, a reserva de emergência — escolha um objetivo e acompanhe o progresso."
+                  ? "Uma viagem, um automóvel, escolha um objetivo e acompanhe o progresso."
                   : "Você concluiu todas as metas que criou. Que tal definir a próxima?"
               }
               action={

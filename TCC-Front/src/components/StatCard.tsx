@@ -1,4 +1,4 @@
-// Cartão de indicador — o "placar" que abre as telas de resumo.
+// Cartão de indicador — o "placar" que abre as telas de resumo. (receita, despesa, saldo do periodo, saldo disponivel)
 
 import type { ReactNode } from "react";
 
