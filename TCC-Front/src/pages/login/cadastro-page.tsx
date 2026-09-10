@@ -5,10 +5,10 @@ import Highlight from "../../components/Highlight";
 const CadastroPage = () => {
   return (
     <AuthLayout
-      title="Crie sua conta ja!"
+      title="Crie sua conta já!"
       subtitle={
         <>
-          Leva menos de um minuto para começar a organizar suas {" "}
+          Leva menos de um minuto para começar a organizar suas{" "}
           <Highlight tone="money"> finanças</Highlight>{" "}
           <strong>com GranaFy</strong>
         </>

@@ -81,7 +81,7 @@ export default function AuthLayout({
 
         <div className="relative z-10 my-12">
           <h2 className="max-w-lg font-display text-[2.6rem] font-bold leading-[1.1] text-balance animate-fade-up">
-            Controle e Saiba exatamente{" "}
+            Saiba exatamente{" "}
             <Highlight tone="money" onDark>
               para onde vai
             </Highlight>{" "}
@@ -89,8 +89,7 @@ export default function AuthLayout({
           </h2>
 
           <p className="mt-4 max-w-md text-[0.95rem] leading-relaxed text-ink-200 animate-fade-up">
-            Cada receita e cada despesa em um só lugar — com o saldo recalculado
-            a cada lançamento.
+            Cada receita e cada despesa em um só lugar — Organize seus gastos!
           </p>
 
           <div

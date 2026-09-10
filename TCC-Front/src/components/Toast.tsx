@@ -1,8 +1,4 @@
-// Sistema de avisos do app.
-//
-// Substitui os alert() do navegador: eles travam a página, não têm identidade
-// visual e obrigam o usuário a clicar "OK" para continuar.
-
+// Remoção dos Alerts
 
 import { useCallback, useMemo, useState } from "react";
 import type { ReactNode } from "react";

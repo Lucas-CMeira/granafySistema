@@ -277,9 +277,6 @@ const EntriesPage = () => {
         `${form.type === "income" ? "Receita" : "Despesa"} registrada.`,
       );
 
-      // Mantém tipo e data: quem lança várias contas do mesmo dia não precisa
-      // preencher os mesmos campos de novo
-
       setForm({ ...EMPTY_FORM, type: form.type, date: form.date });
       await fetchData();
     } catch (error) {
@@ -485,9 +482,7 @@ const EntriesPage = () => {
                 onChange={(e) => setField("title", e.target.value)}
                 required
                 placeholder={
-                  form.type === "income"
-                    ? "Ex: Salário"
-                    : "Ex: Supermercado"
+                  form.type === "income" ? "Ex: Salário" : "Ex: Supermercado"
                 }
                 className="field"
               />

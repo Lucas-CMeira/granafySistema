@@ -21,8 +21,6 @@ export class AuthService {
             throw new Error("Email inválido");
         }
 
-        // A regra de tamanho mínimo existia apenas no formulário do front, então
-        // qualquer requisição direta à API criava conta com senha de 1 caractere.
         if (!password || password.length < 6) {
             throw new Error("A senha deve ter pelo menos 6 caracteres");
         }
@@ -49,7 +47,7 @@ export class AuthService {
             name: user.name,
             email: user.email
         };
-    }   
+    }
     async login(email: string, password: string) {
 
         const user = await this.authRepository.findByEmail(email);

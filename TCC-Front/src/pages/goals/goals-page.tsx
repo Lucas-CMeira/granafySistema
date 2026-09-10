@@ -1,6 +1,5 @@
 // Tela de metas financeiras: criação, acompanhamento do progresso, edição e
-// exclusão. Além do quanto já foi guardado, cada meta calcula o que ainda falta
-// e o ritmo mensal necessário para chegar lá dentro do prazo.
+// exclusão.
 
 import { useEffect, useMemo, useState } from "react";
 import {

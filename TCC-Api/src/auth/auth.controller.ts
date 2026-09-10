@@ -48,7 +48,7 @@ export class AuthController {
 
             reply.setCookie("token", result.token, {
                 httpOnly: true,
-                secure: false, // localhost
+                secure: false,
                 sameSite: "lax",
                 path: "/"
             })
