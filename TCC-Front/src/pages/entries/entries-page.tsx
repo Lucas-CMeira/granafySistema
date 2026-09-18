@@ -374,7 +374,7 @@ const EntriesPage = () => {
     }
   };
 
-  // ── Lançamentos fixos ---//
+  // Lançamentos fixos //
 
   const parentOf = (entry: Entry) =>
     entry.parentId
