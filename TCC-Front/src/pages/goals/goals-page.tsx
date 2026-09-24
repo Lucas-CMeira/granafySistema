@@ -33,6 +33,7 @@ import { useToast } from "../../components/toast-context";
 import { errorMessage } from "../../utils/errors";
 import {
   getGoalCompletionDetails,
+  getGoalMonthlyPlan,
   isGoalCompleted,
   sumSavedEntries,
 } from "../../utils/goals";
@@ -616,7 +617,7 @@ function GoalCard({
   const overdue = !isCompleted && days < 0;
   const urgent = !isCompleted && days >= 0 && days <= 14;
 
-  const monthlyPace = remaining / monthsUntil(goal.limitDate);
+  const plan = getGoalMonthlyPlan(goal);
 
   const frame = isCompleted
     ? "border-emerald-200 bg-emerald-50/50"
@@ -739,9 +740,24 @@ function GoalCard({
             </p>
 
             {!overdue && (
-              <p className="tnum text-xs text-ocean-700">
-                guarde <strong>R$ {formatMoney(monthlyPace)}</strong>/mês
-              </p>
+              <div className="tnum text-right text-xs text-ocean-700">
+                {plan.remainingThisMonth > 0.005 ? (
+                  <p>
+                    guarde <strong>R$ {formatMoney(plan.remainingThisMonth)}</strong>{" "}
+                    este mês
+                  </p>
+                ) : (
+                  <p className="font-semibold text-emerald-700">
+                    Parcela do mês guardada
+                  </p>
+                )}
+                {plan.savedThisMonth > 0 && (
+                  <p className="mt-0.5 text-ink-400">
+                    R$ {formatMoney(plan.savedThisMonth)} de R${" "}
+                    {formatMoney(plan.monthlyTarget)}/mês já guardados
+                  </p>
+                )}
+              </div>
             )}
           </div>
         )}

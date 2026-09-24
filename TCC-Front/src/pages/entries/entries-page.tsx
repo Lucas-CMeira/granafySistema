@@ -73,6 +73,18 @@ const EMPTY_FORM = {
 
 type FormState = typeof EMPTY_FORM;
 
+type DeleteScope = "single" | "all";
+
+// Receita guardada numa meta dispensa título e categoria.
+const isGoalDeposit = (state: FormState) =>
+  state.type === "income" && Boolean(state.goalId);
+
+const OptionalTag = () => (
+  <span className="font-normal normal-case tracking-normal text-ink-400">
+    (opcional)
+  </span>
+);
+
 const EntriesPage = () => {
   const toast = useToast();
 
@@ -224,8 +236,10 @@ const EntriesPage = () => {
   };
 
   const validate = (state: FormState): string | null => {
-    if (!state.title.trim()) return "Dê um título ao lançamento.";
-    if (!state.categoryId) return "Escolha uma categoria.";
+    if (!isGoalDeposit(state)) {
+      if (!state.title.trim()) return "Dê um título ao lançamento.";
+      if (!state.categoryId) return "Escolha uma categoria.";
+    }
     if (parseCurrency(state.displayValue) <= 0)
       return "Informe um valor maior que zero.";
     if (!state.date) return "Escolha a data do lançamento.";
@@ -255,11 +269,11 @@ const EntriesPage = () => {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          title: form.title.trim(),
+          title: form.title.trim() || undefined,
           value: parseCurrency(form.displayValue),
           type: form.type,
           date: form.date,
-          categoryId,
+          categoryId: categoryId || undefined,
           goalId: form.goalId || undefined,
           isFixed: form.isFixed,
           repeatCount: form.isFixed ? Number(form.repeatCount) : undefined,
@@ -324,7 +338,7 @@ const EntriesPage = () => {
           value: parseCurrency(editForm.displayValue),
           type: editForm.type,
           date: editForm.date,
-          categoryId,
+          categoryId: categoryId || null,
           goalId: editForm.goalId || null,
           isFixed: editForm.isFixed,
           repeatCount: editForm.isFixed ? Number(editForm.repeatCount) : null,
@@ -350,9 +364,13 @@ const EntriesPage = () => {
     }
   };
 
-  const handleDelete = async (id: string, message: string) => {
+  const handleDelete = async (
+    id: string,
+    message: string,
+    scope: DeleteScope = "all",
+  ) => {
     try {
-      const response = await fetch(`${API_URL}/entries/${id}`, {
+      const response = await fetch(`${API_URL}/entries/${id}?scope=${scope}`, {
         method: "DELETE",
         credentials: "include",
       });
@@ -471,18 +489,49 @@ const EntriesPage = () => {
               </div>
             </div>
 
+            {form.type === "income" &&
+              availableGoals(form.goalId).length > 0 && (
+                <div className="animate-fade-in">
+                  <label htmlFor="entry-goal" className="field-label">
+                    Guardar para uma meta
+                  </label>
+                  <select
+                    id="entry-goal"
+                    value={form.goalId}
+                    onChange={(e) => setField("goalId", e.target.value)}
+                    className="field"
+                  >
+                    <option value="">Nenhuma meta</option>
+                    {availableGoals(form.goalId).map((goal) => (
+                      <option key={goal.id} value={goal.id}>
+                        {goal.title}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="field-hint">
+                    O valor sai do seu saldo disponível e passa a contar como
+                    guardado nessa meta.
+                    {form.goalId && " Título e categoria ficam opcionais."}
+                  </p>
+                </div>
+              )}
+
             <div>
               <label htmlFor="entry-title" className="field-label">
-                Título
+                Título {isGoalDeposit(form) && <OptionalTag />}
               </label>
               <input
                 id="entry-title"
                 type="text"
                 value={form.title}
                 onChange={(e) => setField("title", e.target.value)}
-                required
+                required={!isGoalDeposit(form)}
                 placeholder={
-                  form.type === "income" ? "Ex: Salário" : "Ex: Supermercado"
+                  isGoalDeposit(form)
+                    ? "Ex: Guardado para a meta"
+                    : form.type === "income"
+                      ? "Ex: Salário"
+                      : "Ex: Supermercado"
                 }
                 className="field"
               />
@@ -504,7 +553,7 @@ const EntriesPage = () => {
               </div>
               <div>
                 <label htmlFor="entry-category" className="field-label">
-                  Categoria
+                  Categoria {isGoalDeposit(form) && <OptionalTag />}
                 </label>
                 <select
                   id="entry-category"
@@ -513,7 +562,7 @@ const EntriesPage = () => {
                     setField("categoryId", e.target.value);
                     setField("customCategory", "");
                   }}
-                  required
+                  required={!isGoalDeposit(form)}
                   className="field"
                 >
                   <option value="">Selecione…</option>
@@ -547,32 +596,6 @@ const EntriesPage = () => {
                 </p>
               </div>
             )}
-
-            {form.type === "income" &&
-              availableGoals(form.goalId).length > 0 && (
-                <div className="animate-fade-in">
-                  <label htmlFor="entry-goal" className="field-label">
-                    Guardar para uma meta
-                  </label>
-                  <select
-                    id="entry-goal"
-                    value={form.goalId}
-                    onChange={(e) => setField("goalId", e.target.value)}
-                    className="field"
-                  >
-                    <option value="">Nenhuma meta</option>
-                    {availableGoals(form.goalId).map((goal) => (
-                      <option key={goal.id} value={goal.id}>
-                        {goal.title}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="field-hint">
-                    O valor sai do seu saldo disponível e passa a contar como
-                    guardado nessa meta.
-                  </p>
-                </div>
-              )}
 
             <FixedToggle
               checked={form.isFixed}
@@ -873,21 +896,21 @@ const EntriesPage = () => {
 
           <div>
             <label htmlFor="edit-entry-title" className="field-label">
-              Título
+              Título {isGoalDeposit(editForm) && <OptionalTag />}
             </label>
             <input
               id="edit-entry-title"
               type="text"
               value={editForm.title}
               onChange={(e) => setEditField("title", e.target.value)}
-              required
+              required={!isGoalDeposit(editForm)}
               className="field"
             />
           </div>
 
           <div>
             <label htmlFor="edit-entry-category" className="field-label">
-              Categoria
+              Categoria {isGoalDeposit(editForm) && <OptionalTag />}
             </label>
             <select
               id="edit-entry-category"
@@ -896,7 +919,7 @@ const EntriesPage = () => {
                 setEditField("categoryId", e.target.value);
                 setEditField("customCategory", "");
               }}
-              required
+              required={!isGoalDeposit(editForm)}
               className="field"
             >
               <option value="">Selecione…</option>
@@ -1182,7 +1205,7 @@ function DeleteEntryDialog({
   parent: Entry | null;
   occurrences: number;
   onClose: () => void;
-  onDelete: (id: string, message: string) => void;
+  onDelete: (id: string, message: string, scope?: DeleteScope) => void;
 }) {
   if (!entry) return null;
 
@@ -1214,28 +1237,30 @@ function DeleteEntryDialog({
           </div>
         </div>
 
-        {isOccurrence ? (
+        {isOccurrence || isTemplate ? (
           <p className="text-sm leading-relaxed text-ink-600">
-            Ele é gerado automaticamente pelo lançamento fixo{" "}
-            <strong className="text-ink-900">
-              “{parent?.title ?? entry.title}”
-            </strong>
-            . Excluir só este mês não adianta: ele volta na próxima atualização
-            da lista. Para parar de vez, exclua o lançamento fixo — isso remove
-            todas as repetições dele.
-          </p>
-        ) : isTemplate ? (
-          <p className="text-sm leading-relaxed text-ink-600">
-            Este é um lançamento fixo.{" "}
-            {occurrences > 0 ? (
+            {isOccurrence ? (
               <>
-                Excluir também remove as{" "}
-                <strong className="text-ink-900">{occurrences}</strong>{" "}
-                repetições já geradas por ele.
+                Ele é uma repetição do lançamento fixo{" "}
+                <strong className="text-ink-900">
+                  “{parent?.title ?? entry.title}”
+                </strong>
+                .
               </>
             ) : (
-              "Ele deixará de gerar repetições nos próximos meses."
-            )}
+              <>
+                Este é um lançamento fixo
+                {occurrences > 0 && (
+                  <>
+                    {" "}com <strong className="text-ink-900">{occurrences}</strong>{" "}
+                    repetições já geradas
+                  </>
+                )}
+                .
+              </>
+            )}{" "}
+            Você pode excluir só o mês de {formatMonthLabel(entry.date)} e
+            manter os outros, ou excluir todos os meses.
           </p>
         ) : (
           <p className="text-sm leading-relaxed text-ink-600">
@@ -1244,43 +1269,48 @@ function DeleteEntryDialog({
           </p>
         )}
 
-        <div className="mt-6 flex gap-3">
-          <button type="button" onClick={onClose} className="btn-ghost flex-1">
-            Cancelar
-          </button>
-
-          {isOccurrence ? (
+        {isOccurrence || isTemplate ? (
+          <div className="mt-6 flex flex-col gap-2.5">
             <button
               type="button"
-              disabled={!parent}
               onClick={() =>
-                parent &&
-                onDelete(
-                  parent.id,
-                  "Lançamento fixo e suas repetições excluídos.",
-                )
+                onDelete(entry.id, "Lançamento excluído só deste mês.", "single")
               }
-              className="btn-danger flex-1"
+              className="btn-danger w-full"
             >
-              Excluir o fixo
+              Excluir só este mês
             </button>
-          ) : (
             <button
               type="button"
               onClick={() =>
                 onDelete(
                   entry.id,
-                  isTemplate
-                    ? "Lançamento fixo e suas repetições excluídos."
-                    : "Lançamento excluído.",
+                  "Lançamento fixo e suas repetições excluídos.",
+                  "all",
                 )
               }
+              className="btn-ghost w-full text-rose-600"
+            >
+              Excluir todos os meses
+            </button>
+            <button type="button" onClick={onClose} className="btn-ghost w-full">
+              Cancelar
+            </button>
+          </div>
+        ) : (
+          <div className="mt-6 flex gap-3">
+            <button type="button" onClick={onClose} className="btn-ghost flex-1">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={() => onDelete(entry.id, "Lançamento excluído.")}
               className="btn-danger flex-1"
             >
               Excluir
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </Modal>
   );

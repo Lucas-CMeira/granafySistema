@@ -12,7 +12,7 @@ export class EntriesRepository {
         type: EntryType,
         date: Date,
         userId: string,
-        categoryId: string,
+        categoryId: string | null,
         goalId?: string,
         isFixed?: boolean,
         repeatCount?: number,
@@ -71,6 +71,40 @@ export class EntriesRepository {
                 goal: true
             }
         })
+    }
+
+    async findChildEntries(parentId: string) {
+        return await prisma.entry.findMany({
+            where: { parentId },
+            orderBy: { date: "asc" }
+        })
+    }
+
+    async addSkippedMonth(id: string, month: string) {
+        return await prisma.entry.update({
+            where: { id },
+            data: { skippedMonths: { push: month } }
+        })
+    }
+
+    // Transforma a repetição `nextId` no novo lançamento fixo da série e
+    // exclui o fixo antigo, reapontando as demais repetições para ela.
+    async promoteToFixed(
+        oldId: string,
+        nextId: string,
+        data: { repeatCount: number, fixedDay: number, skippedMonths: string[] }
+    ) {
+        return await prisma.$transaction([
+            prisma.entry.updateMany({
+                where: { parentId: oldId, id: { not: nextId } },
+                data: { parentId: nextId }
+            }),
+            prisma.entry.update({
+                where: { id: nextId },
+                data: { ...data, isFixed: true, parentId: null }
+            }),
+            prisma.entry.delete({ where: { id: oldId } })
+        ])
     }
 
     async deleteChildEntries(parentId: string) {

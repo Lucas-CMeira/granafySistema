@@ -49,6 +49,15 @@ export function monthKey(dateStr: string): string {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
+export function currentMonthKey(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+
+export function isUpToCurrentMonth(dateStr: string): boolean {
+  return monthKey(dateStr) <= currentMonthKey();
+}
+
 export function todayInputValue(): string {
   const now = new Date();
   const year = now.getFullYear();
@@ -78,8 +87,17 @@ export function deadlineLabel(dateStr: string): string {
   return `Venceu há ${Math.abs(days)} dias`;
 }
 
+// Meses de calendário que restam até a data, contando o mês atual.
 export function monthsUntil(dateStr: string): number {
-  return Math.max(1, Math.ceil(daysUntil(dateStr) / 30));
+  const target = new Date(dateStr);
+  if (isNaN(target.getTime())) return 1;
+
+  const now = new Date();
+  const months =
+    (target.getUTCFullYear() - now.getFullYear()) * 12 +
+    (target.getUTCMonth() - now.getMonth()) +
+    1;
+  return Math.max(1, months);
 }
 
 

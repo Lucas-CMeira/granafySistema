@@ -82,6 +82,24 @@ export class GoalsController {
         }
     }
 
+    async deposit(request: FastifyRequest, reply: FastifyReply) {
+        try {
+            await request.jwtVerify();
+            const { sub: userId } = request.user as { sub: string };
+            const { id } = request.params as { id: string };
+            const { amount } = request.body as { amount: number };
+
+            const result = await this.goalsService.depositToGoal(id, userId, amount);
+
+            return reply.status(200).send(result);
+
+        } catch (error: any) {
+            return reply.status(400).send({
+                message: error.message
+            });
+        }
+    }
+
     async delete(request: FastifyRequest, reply: FastifyReply) {
         try {
             await request.jwtVerify();

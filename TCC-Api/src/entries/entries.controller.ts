@@ -18,7 +18,7 @@ export class EntriesController {
                 value: number
                 type: string
                 date: string
-                categoryId: string
+                categoryId?: string
                 goalId?: string
                 isFixed?: boolean
                 repeatCount?: number
@@ -74,7 +74,7 @@ export class EntriesController {
                 value?: number
                 type?: string
                 date?: string
-                categoryId?: string
+                categoryId?: string | null
                 goalId?: string | null
                 isFixed?: boolean
                 repeatCount?: number | null
@@ -96,8 +96,9 @@ export class EntriesController {
             await request.jwtVerify();
             const { sub: userId } = request.user as { sub: string };
             const { id } = request.params as { id: string };
+            const { scope } = request.query as { scope?: string };
 
-            await this.entriesService.deleteEntry(id, userId);
+            await this.entriesService.deleteEntry(id, userId, scope === "single" ? "single" : "all");
 
             return reply.status(204).send();
 

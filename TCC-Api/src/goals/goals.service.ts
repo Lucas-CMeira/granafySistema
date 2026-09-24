@@ -2,6 +2,7 @@
 
 import { GoalsRepository } from "./goals.repository"
 import { prisma } from "../pluggins/prisma"
+import { isGoalCompleted, roundMoney, startOfNextMonth } from "./goals.rules"
 
 export class GoalsService {
 
@@ -30,13 +31,6 @@ export class GoalsService {
         return await this.goalsRepository.findAllByUserId(userId)
     }
 
-    private isGoalCompleted(goal: { value: number; entries?: { type: string; value: number }[] }) {
-        const saved = (goal.entries || [])
-            .filter((entry) => entry.type === "income")
-            .reduce((total, entry) => total + Math.abs(Number(entry.value)), 0);
-        return saved >= goal.value;
-    }
-
     async updateGoal(
         id: string,
         userId: string,
@@ -54,7 +48,7 @@ export class GoalsService {
         if (
             data.value !== undefined &&
             Number(data.value) < goal.value &&
-            this.isGoalCompleted(goal)
+            isGoalCompleted(goal)
         ) {
             throw new Error("Esta meta já foi concluída. O valor objetivo só pode ser aumentado, não reduzido.");
         }
@@ -70,6 +64,82 @@ export class GoalsService {
         if (data.limitDate !== undefined) updatePayload.limitDate = new Date(data.limitDate);
 
         return await this.goalsRepository.update(id, userId, updatePayload);
+    }
+
+    async depositToGoal(id: string, userId: string, amount: number) {
+        const target = roundMoney(Number(amount));
+        if (isNaN(target) || target <= 0) {
+            throw new Error("Informe um valor maior que zero");
+        }
+
+        const goal = await this.goalsRepository.findById(id, userId);
+        if (!goal) {
+            throw new Error("Meta não encontrada ou sem permissão");
+        }
+        if (isGoalCompleted(goal)) {
+            throw new Error("Esta meta já foi concluída. Não é possível atrelar novos lançamentos a ela.");
+        }
+
+        // Só conta o que já caiu até o mês atual.
+        const entries = await prisma.entry.findMany({
+            where: { userId, date: { lt: startOfNextMonth() } },
+            orderBy: { date: "asc" }
+        });
+
+        const freeIncome = entries.filter((entry) => entry.type === "income" && !entry.goalId);
+        const available = roundMoney(
+            freeIncome.reduce((total, entry) => total + entry.value, 0) -
+            entries
+                .filter((entry) => entry.type === "expenses")
+                .reduce((total, entry) => total + entry.value, 0)
+        );
+
+        if (target > available) {
+            throw new Error(
+                `Você tem R$ ${available.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} disponíveis para guardar.`
+            );
+        }
+
+        // Lançamentos fixos por último, para não transformar o modelo da
+        // repetição num lançamento de meta sem necessidade.
+        const candidates = [
+            ...freeIncome.filter((entry) => !entry.isFixed),
+            ...freeIncome.filter((entry) => entry.isFixed),
+        ];
+
+        await prisma.$transaction(async (tx) => {
+            let remaining = target;
+
+            for (const entry of candidates) {
+                if (remaining <= 0) break;
+
+                if (entry.value <= remaining) {
+                    await tx.entry.update({ where: { id: entry.id }, data: { goalId: id } });
+                    remaining = roundMoney(remaining - entry.value);
+                    continue;
+                }
+
+                await tx.entry.update({
+                    where: { id: entry.id },
+                    data: { value: roundMoney(entry.value - remaining) }
+                });
+                await tx.entry.create({
+                    data: {
+                        title: entry.title,
+                        description: entry.description,
+                        value: remaining,
+                        type: "income",
+                        date: entry.date,
+                        userId,
+                        categoryId: entry.categoryId,
+                        goalId: id
+                    }
+                });
+                remaining = 0;
+            }
+        });
+
+        return { amount: target };
     }
 
     async deleteGoal(id: string, userId: string) {

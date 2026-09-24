@@ -21,11 +21,14 @@ import {
   formatDate,
   formatMonthLabel,
   monthKey,
+  currentMonthKey,
+  isUpToCurrentMonth,
   categoryColor,
   categoryInitials,
   daysUntil,
-  monthsUntil,
 } from "../../utils/format";
+import { getGoalMonthlyPlan, sumSavedEntries } from "../../utils/goals";
+import type { Goal } from "../../utils/goals";
 import StatCard from "../../components/StatCard";
 import Highlight from "../../components/Highlight";
 import EmptyState from "../../components/EmptyState";
@@ -47,20 +50,14 @@ type Entry = {
   parentId?: string | null;
 };
 
-type Goal = {
-  id: string;
-  title: string;
-  value: number;
-  limitDate: string;
-  entries?: { type: string; value: number }[];
-};
-
-const savedInGoal = (goal: Goal) =>
-  (goal.entries || [])
-    .filter((entry) => entry.type === "income")
-    .reduce((total, entry) => total + Math.abs(Number(entry.value)), 0);
+const savedInGoal = (goal: Goal) => sumSavedEntries(goal.entries);
 
 const DISMISS_KEY = "granafy:dismissedGoalSuggestion";
+
+// A dispensa vale para aquela sugestão específica: se a meta for editada, o
+// mês virar ou o quanto falta mudar, a sugestão volta a aparecer.
+const suggestionKey = (goal: Goal, amount: number) =>
+  [goal.id, currentMonthKey(), goal.value, goal.limitDate, amount.toFixed(2)].join("|");
 
 const HomePage = () => {
   const toast = useToast();
@@ -70,7 +67,7 @@ const HomePage = () => {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
   const [depositingGoalId, setDepositingGoalId] = useState<string | null>(null);
-  const [dismissedGoalId, setDismissedGoalId] = useState<string | null>(() => {
+  const [dismissedKey, setDismissedKey] = useState<string | null>(() => {
     try {
       return localStorage.getItem(DISMISS_KEY);
     } catch {
@@ -107,7 +104,15 @@ const HomePage = () => {
     return "Boa noite";
   }, []);
 
-  const currentMonth = useMemo(() => monthKey(new Date().toISOString()), []);
+  const currentMonth = useMemo(() => currentMonthKey(), []);
+
+  // Repetições de meses futuros já existem no banco, mas ainda não caíram:
+  // o saldo considera só o que entrou e saiu até o mês atual.
+  const pastEntries = useMemo(
+    () => entries.filter((entry) => isUpToCurrentMonth(entry.date)),
+    [entries],
+  );
+
   const finances = useMemo(() => {
     const monthEntries = entries.filter(
       (entry) => monthKey(entry.date) === currentMonth,
@@ -123,8 +128,8 @@ const HomePage = () => {
       .reduce((total, entry) => total + entry.value, 0);
     const monthIncome = sum(monthEntries, "income") - monthGoalsIncome;
     const monthExpenses = sum(monthEntries, "expenses");
-    const totalBalance = sum(entries, "income") - sum(entries, "expenses");
-    const goalsBalance = entries
+    const totalBalance = sum(pastEntries, "income") - sum(pastEntries, "expenses");
+    const goalsBalance = pastEntries
       .filter((entry) => entry.type === "income" && entry.goalId)
       .reduce((total, entry) => total + entry.value, 0);
     const availableBalance = totalBalance - goalsBalance;
@@ -137,9 +142,9 @@ const HomePage = () => {
       goalsBalance,
       availableBalance,
     };
-  }, [entries, currentMonth]);
+  }, [entries, pastEntries, currentMonth]);
 
-  const recentEntries = useMemo(() => entries.slice(0, 5), [entries]);
+  const recentEntries = useMemo(() => pastEntries.slice(0, 5), [pastEntries]);
 
   const activeGoals = useMemo(
     () =>
@@ -150,110 +155,52 @@ const HomePage = () => {
     [goals],
   );
 
+  // Sugere guardar o que ainda falta da parcela deste mês na meta mais
+  // próxima do prazo (ou o que houver disponível, se for menos que isso).
   const suggestion = useMemo(() => {
-    if (activeGoals.length === 0) return null;
-    const goal = activeGoals[0];
-    const remaining = Math.max(0, goal.value - savedInGoal(goal));
-    const monthlyPace = remaining / monthsUntil(goal.limitDate);
-    if (finances.availableBalance < monthlyPace - 0.005) return null;
-    return { goal, amount: Math.min(monthlyPace, finances.availableBalance) };
-  }, [activeGoals, finances.availableBalance]);
+    if (finances.availableBalance <= 0.005) return null;
+
+    for (const goal of activeGoals) {
+      const { remainingThisMonth } = getGoalMonthlyPlan(goal);
+      if (remainingThisMonth <= 0.005) continue;
+
+      const amount = Math.round(Math.min(remainingThisMonth, finances.availableBalance) * 100) / 100;
+      const key = suggestionKey(goal, amount);
+      if (key === dismissedKey) continue;
+
+      return { goal, amount, key };
+    }
+    return null;
+  }, [activeGoals, finances.availableBalance, dismissedKey]);
 
   const monthLabel = formatMonthLabel(new Date().toISOString());
 
-  const dismissSuggestion = (goalId: string) => {
-    setDismissedGoalId(goalId);
+  const dismissSuggestion = (key: string) => {
+    setDismissedKey(key);
     try {
-      localStorage.setItem(DISMISS_KEY, goalId);
+      localStorage.setItem(DISMISS_KEY, key);
     } catch {}
   };
 
-  const handleDeposit = async (goal: Goal, targetAmount: number) => {
-    const target = Math.min(targetAmount, finances.availableBalance);
-    if (target <= 0) return;
-
+  const handleDeposit = async (goal: Goal, amount: number) => {
     setDepositingGoalId(goal.id);
     try {
-      const candidates = [...entries]
-        .filter((entry) => entry.type === "income" && !entry.goalId)
-        .sort(
-          (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
-        );
-
-      const relink = async (
-        id: string,
-        extra: Record<string, unknown> = {},
-      ) => {
-        const response = await fetch(`${API_URL}/entries/${id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ goalId: goal.id, ...extra }),
-        });
-        if (!response.ok) {
-          const data = await response.json().catch(() => null);
-          throw new Error(data?.message || "Não foi possível guardar na meta.");
-        }
-      };
-
-      let remaining = target;
-      let moved = 0;
-
-      for (const entry of candidates) {
-        if (remaining <= 0.005) break;
-
-        if (entry.value <= remaining + 0.005) {
-          await relink(entry.id);
-          remaining -= entry.value;
-          moved += entry.value;
-          continue;
-        }
-
-        if (!entry.isFixed && !entry.parentId) {
-          const keep = entry.value - remaining;
-          await relink(entry.id, { value: remaining });
-
-          const createRes = await fetch(`${API_URL}/entries`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({
-              title: entry.title,
-              description: entry.description || undefined,
-              value: keep,
-              type: "income",
-              date: entry.date,
-              categoryId: entry.categoryId,
-            }),
-          });
-          if (!createRes.ok) {
-            const data = await createRes.json().catch(() => null);
-            throw new Error(
-              data?.message || "Não foi possível guardar na meta.",
-            );
-          }
-
-          moved += remaining;
-          remaining = 0;
-          break;
-        }
+      const response = await fetch(`${API_URL}/goals/${goal.id}/deposit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ amount }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.message || "Não foi possível guardar na meta.");
       }
 
-      if (moved <= 0) {
-        toast.error("Não foi possível guardar na meta agora.");
-        return;
-      }
-
-      toast.success(
-        remaining > 0.005
-          ? `R$ ${formatMoney(moved)} guardados em "${goal.title}" — o restante não coube em um único lançamento.`
-          : `R$ ${formatMoney(moved)} guardados em "${goal.title}".`,
-      );
-      await fetchData();
+      toast.success(`R$ ${formatMoney(amount)} guardados em "${goal.title}".`);
     } catch (error) {
       toast.error(errorMessage(error, "Não foi possível guardar na meta."));
-      await fetchData();
     } finally {
+      await fetchData();
       setDepositingGoalId(null);
     }
   };
@@ -323,11 +270,11 @@ const HomePage = () => {
         />
       </section>
 
-      {!loading && suggestion && dismissedGoalId !== suggestion.goal.id && (
+      {!loading && suggestion && (
         <section className="relative mb-6 flex flex-col items-start justify-between gap-4 rounded-2xl border border-ocean-100 bg-ocean-50/70 p-5 pr-11 sm:flex-row sm:items-center sm:pr-12">
           <button
             type="button"
-            onClick={() => dismissSuggestion(suggestion.goal.id)}
+            onClick={() => dismissSuggestion(suggestion.key)}
             title="Dispensar sugestão"
             aria-label="Dispensar sugestão"
             className="absolute right-3 top-3 rounded-lg p-1.5 text-ocean-400 transition hover:bg-ocean-100 hover:text-ocean-700"

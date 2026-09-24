@@ -4,6 +4,10 @@ import { EntriesRepository } from "./entries.repository"
 import { CategoriesRepository } from "../categories/categories.repository"
 import { GoalsRepository } from "../goals/goals.repository"
 import { EntryType } from "@prisma/client"
+import { isGoalCompleted } from "../goals/goals.rules"
+
+const monthKeyOf = (date: Date) =>
+    `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
 
 export class EntriesService {
 
@@ -13,13 +17,6 @@ export class EntriesService {
         private goalsRepository: GoalsRepository
     ) { }
 
-    private isGoalCompleted(goal: { value: number; entries?: { type: string; value: number }[] }) {
-        const saved = (goal.entries || [])
-            .filter((entry) => entry.type === "income")
-            .reduce((total, entry) => total + Math.abs(Number(entry.value)), 0);
-        return saved >= goal.value;
-    }
-
     async createEntry(
         title: string,
         description: string | undefined,
@@ -27,18 +24,40 @@ export class EntriesService {
         type: string,
         date: Date,
         userId: string,
-        categoryId: string,
+        categoryId: string | undefined,
         goalId: string | undefined,
         isFixed: boolean = false,
         repeatCount: number | undefined = undefined,
         parentId: string | undefined = undefined
     ) {
-        if (!title || value === undefined || !type || !date || !categoryId) {
-            throw new Error("Título, Valor, Tipo, Data e Categoria são obrigatórios")
+        if (value === undefined || !type || !date) {
+            throw new Error("Valor, Tipo e Data são obrigatórios")
         }
 
         if (type !== "income" && type !== "expenses") {
             throw new Error("Tipo inválido. Deve ser 'income' ou 'expenses'")
+        }
+
+        let goal: Awaited<ReturnType<GoalsRepository["findById"]>> = null;
+        if (goalId) {
+            if (type !== "income") {
+                throw new Error("Somente lançamentos de receita podem ser atrelados a uma meta");
+            }
+            goal = await this.goalsRepository.findById(goalId, userId);
+            if (!goal) {
+                throw new Error("Meta não encontrada ou sem permissão");
+            }
+            if (isGoalCompleted(goal)) {
+                throw new Error("Esta meta já foi concluída. Não é possível atrelar novos lançamentos a ela.");
+            }
+        }
+
+        const finalTitle = title?.trim() || (goal ? `Guardado em ${goal.title}` : "");
+        if (!finalTitle) {
+            throw new Error("Dê um título ao lançamento");
+        }
+        if (!categoryId && !goal) {
+            throw new Error("Escolha uma categoria");
         }
 
         if (isNaN(Number(value)) || Number(value) <= 0) {
@@ -49,21 +68,10 @@ export class EntriesService {
             throw new Error("Data inválida")
         }
 
-        const category = await this.categoriesRepository.findById(categoryId, userId);
-        if (!category) {
-            throw new Error("Categoria não encontrada ou sem permissão");
-        }
-
-        if (goalId) {
-            if (type !== "income") {
-                throw new Error("Somente lançamentos de receita podem ser atrelados a uma meta");
-            }
-            const goal = await this.goalsRepository.findById(goalId, userId);
-            if (!goal) {
-                throw new Error("Meta não encontrada ou sem permissão");
-            }
-            if (this.isGoalCompleted(goal)) {
-                throw new Error("Esta meta já foi concluída. Não é possível atrelar novos lançamentos a ela.");
+        if (categoryId) {
+            const category = await this.categoriesRepository.findById(categoryId, userId);
+            if (!category) {
+                throw new Error("Categoria não encontrada ou sem permissão");
             }
         }
 
@@ -72,12 +80,12 @@ export class EntriesService {
         }
 
         const payload: any = {
-            title,
+            title: finalTitle,
             value,
             type: type as EntryType,
             date,
             userId,
-            categoryId
+            categoryId: categoryId || null
         };
         if (description) payload.description = description;
         if (goalId) payload.goalId = goalId;
@@ -108,6 +116,11 @@ export class EntriesService {
                     continue;
                 }
 
+                // Mês cuja repetição o usuário excluiu individualmente.
+                if (fixed.skippedMonths.includes(monthKeyOf(targetDate))) {
+                    continue;
+                }
+
                 const exists = await this.entriesRepository.checkOccurrenceExists(fixed.id, targetYear, targetMonth);
 
                 if (!exists) {
@@ -122,7 +135,7 @@ export class EntriesService {
                         type: fixed.type,
                         date: newDate,
                         userId,
-                        categoryId: fixed.categoryId!,
+                        categoryId: fixed.categoryId,
                         parentId: fixed.id
                     };
                     if (fixed.description) occurrencePayload.description = fixed.description;
@@ -145,7 +158,7 @@ export class EntriesService {
             value?: number
             type?: string
             date?: string
-            categoryId?: string
+            categoryId?: string | null
             goalId?: string | null
             isFixed?: boolean
             repeatCount?: number | null
@@ -164,7 +177,7 @@ export class EntriesService {
             throw new Error("O valor do lançamento deve ser maior que zero");
         }
 
-        if (data.categoryId !== undefined) {
+        if (data.categoryId) {
             const category = await this.categoriesRepository.findById(data.categoryId, userId);
             if (!category) {
                 throw new Error("Categoria não encontrada ou sem permissão");
@@ -178,20 +191,32 @@ export class EntriesService {
             throw new Error("Somente lançamentos de receita podem ser atrelados a uma meta");
         }
 
-        if (data.goalId) {
-            const goal = await this.goalsRepository.findById(data.goalId, userId);
+        let goal: Awaited<ReturnType<GoalsRepository["findById"]>> = null;
+        if (effectiveGoalId) {
+            goal = await this.goalsRepository.findById(effectiveGoalId, userId);
             if (!goal) {
                 throw new Error("Meta não encontrada ou sem permissão");
             }
 
-            const isNewAttachment = data.goalId !== (entry as any).goalId;
-            if (isNewAttachment && this.isGoalCompleted(goal)) {
+            const isNewAttachment = effectiveGoalId !== (entry as any).goalId;
+            if (isNewAttachment && isGoalCompleted(goal)) {
                 throw new Error("Esta meta já foi concluída. Não é possível atrelar novos lançamentos a ela.");
             }
         }
 
+        const effectiveCategoryId = data.categoryId !== undefined ? data.categoryId : entry.categoryId;
+        if (!effectiveCategoryId && !goal) {
+            throw new Error("Escolha uma categoria");
+        }
+
         const updatePayload: any = {};
-        if (data.title !== undefined) updatePayload.title = data.title;
+        if (data.title !== undefined) {
+            const title = data.title.trim() || (goal ? `Guardado em ${goal.title}` : "");
+            if (!title) {
+                throw new Error("Dê um título ao lançamento");
+            }
+            updatePayload.title = title;
+        }
         if (data.description !== undefined) updatePayload.description = data.description;
         if (data.value !== undefined) updatePayload.value = data.value;
         if (data.type !== undefined) {
@@ -201,7 +226,7 @@ export class EntriesService {
             updatePayload.type = data.type as EntryType;
         }
         if (data.date !== undefined) updatePayload.date = new Date(data.date);
-        if (data.categoryId !== undefined) updatePayload.categoryId = data.categoryId;
+        if (data.categoryId !== undefined) updatePayload.categoryId = data.categoryId || null;
         if (data.goalId !== undefined) updatePayload.goalId = data.goalId;
         if (data.isFixed !== undefined) updatePayload.isFixed = data.isFixed;
         if (data.repeatCount !== undefined) updatePayload.repeatCount = data.repeatCount;
@@ -234,16 +259,52 @@ export class EntriesService {
         return await this.entriesRepository.update(id, userId, updatePayload);
     }
 
-    async deleteEntry(id: string, userId: string) {
+    // scope "single": exclui só o mês deste lançamento, mantendo os demais
+    // meses da repetição. scope "all": exclui o lançamento fixo inteiro.
+    async deleteEntry(id: string, userId: string, scope: "single" | "all" = "all") {
         const entry = await this.entriesRepository.findById(id, userId);
         if (!entry) {
             throw new Error("Lançamento não encontrado ou sem permissão");
         }
 
-        if ((entry as any).isFixed) {
-            await this.entriesRepository.deleteChildEntries(id);
+        const parent = entry.parentId
+            ? await this.entriesRepository.findById(entry.parentId, userId)
+            : null;
+
+        if (scope === "single") {
+            if (parent) {
+                // Marca o mês como pulado para a sincronização não recriá-lo.
+                await this.entriesRepository.addSkippedMonth(parent.id, monthKeyOf(entry.date));
+                return await this.entriesRepository.delete(id, userId);
+            }
+
+            if (entry.isFixed) {
+                // O próprio fixo é o primeiro mês da série: a próxima repetição
+                // assume o papel de lançamento fixo pelos meses que restam.
+                const [next] = await this.entriesRepository.findChildEntries(id);
+                if (!next) {
+                    return await this.entriesRepository.delete(id, userId);
+                }
+
+                const monthsAhead =
+                    (next.date.getUTCFullYear() - entry.date.getUTCFullYear()) * 12 +
+                    (next.date.getUTCMonth() - entry.date.getUTCMonth());
+
+                return await this.entriesRepository.promoteToFixed(entry.id, next.id, {
+                    repeatCount: Math.max(1, (entry.repeatCount ?? 12) - monthsAhead),
+                    fixedDay: entry.fixedDay ?? entry.date.getUTCDate(),
+                    skippedMonths: entry.skippedMonths,
+                });
+            }
+
+            return await this.entriesRepository.delete(id, userId);
         }
 
-        return await this.entriesRepository.delete(id, userId);
+        const root = parent ?? entry;
+        if (root.isFixed) {
+            await this.entriesRepository.deleteChildEntries(root.id);
+        }
+
+        return await this.entriesRepository.delete(root.id, userId);
     }
 }

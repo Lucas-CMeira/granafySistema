@@ -35,6 +35,7 @@ import {
   formatDate,
   formatMonthLabel,
   monthKey,
+  isUpToCurrentMonth,
   categoryColor,
 } from "../../utils/format";
 import PageHeader from "../../components/PageHeader";
@@ -100,12 +101,19 @@ const ProfilePage = () => {
     fetchData();
   }, []);
 
+  // Repetições futuras de lançamentos fixos ainda não aconteceram e ficam
+  // fora dos indicadores e gráficos.
+  const pastEntries = useMemo(
+    () => entries.filter((entry) => isUpToCurrentMonth(entry.date)),
+    [entries],
+  );
+
   // lógica da Taxa de poupança
   const totals = useMemo(() => {
-    const income = entries
+    const income = pastEntries
       .filter((e) => e.type === "income")
       .reduce((sum, e) => sum + e.value, 0);
-    const expenses = entries
+    const expenses = pastEntries
       .filter((e) => e.type === "expenses")
       .reduce((sum, e) => sum + e.value, 0);
     const balance = income - expenses;
@@ -113,12 +121,12 @@ const ProfilePage = () => {
     const savingsRate = income > 0 ? ((income - expenses) / income) * 100 : 0;
 
     return { income, expenses, balance, savingsRate };
-  }, [entries]);
+  }, [pastEntries]);
 
   const categoryChartData = useMemo(() => {
     const byCategory = new Map<string, { value: number; color: string }>();
 
-    entries
+    pastEntries
       .filter((entry) => entry.type === "expenses")
       .forEach((entry) => {
         const name = entry.category?.name || "Sem categoria";
@@ -132,25 +140,30 @@ const ProfilePage = () => {
     return [...byCategory.entries()]
       .map(([name, data]) => ({ name, value: data.value, color: data.color }))
       .sort((a, b) => b.value - a.value);
-  }, [entries]);
+  }, [pastEntries]);
 
   const topCategory = categoryChartData[0];
 
+  // Janela fixa dos 6 meses que terminam no mês atual do calendário, para o
+  // gráfico andar junto com o tempo (meses sem lançamento aparecem zerados).
   const monthlyChartData = useMemo(() => {
+    if (entries.length === 0) return [];
+
+    const now = new Date();
     const byMonth = new Map<string, { Receitas: number; Despesas: number }>();
+    for (let offset = 5; offset >= 0; offset--) {
+      const month = new Date(Date.UTC(now.getFullYear(), now.getMonth() - offset, 15));
+      byMonth.set(monthKey(month.toISOString()), { Receitas: 0, Despesas: 0 });
+    }
 
     entries.forEach((entry) => {
-      const key = monthKey(entry.date);
-      if (!byMonth.has(key)) byMonth.set(key, { Receitas: 0, Despesas: 0 });
-      const bucket = byMonth.get(key)!;
+      const bucket = byMonth.get(monthKey(entry.date));
+      if (!bucket) return;
       if (entry.type === "income") bucket.Receitas += entry.value;
       else bucket.Despesas += entry.value;
     });
 
-    return [...byMonth.entries()]
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .slice(-6)
-      .map(([key, values]) => ({
+    return [...byMonth.entries()].map(([key, values]) => ({
         name: formatMonthLabel(`${key}-15`).split(" de ")[0].slice(0, 3),
         ...values,
       }));

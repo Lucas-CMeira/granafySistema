@@ -12,5 +12,6 @@ export async function goalsRoutes(fastify: FastifyInstance) {
     fastify.post("/goals", controller.create.bind(controller))
     fastify.get("/goals", controller.list.bind(controller))
     fastify.put("/goals/:id", controller.update.bind(controller))
+    fastify.post("/goals/:id/deposit", controller.deposit.bind(controller))
     fastify.delete("/goals/:id", controller.delete.bind(controller))
 }
