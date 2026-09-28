@@ -396,12 +396,11 @@ const GoalsPage = () => {
             </p>
             <p className="text-sm leading-relaxed text-ocean-900/80">
               Ao registrar uma <strong>receita</strong> em Lançamentos, escolha{" "}
-              <em>“Guardar para uma meta”</em>. O valor sai do seu saldo
-              disponível e vai para essa “caixinha” Ficando separado do saldo
-              disponível até você desvincular o lançamento. Quando a meta bate o
-              valor objetivo, ela é concluída e fica guardada no histórico, o
-              dinheiro permanece na caixinha, sem voltar a contar no saldo
-              disponível.
+              <em>“Guardar para uma meta”</em>. O valor entra direto nessa
+              “caixinha”, sem mexer no seu saldo disponível, e fica separado
+              dele até você desvincular o lançamento. Quando a meta bate o valor
+              objetivo, ela é concluída e fica guardada no histórico, o dinheiro
+              permanece na caixinha, sem voltar a contar no saldo disponível.
             </p>
           </aside>
         </div>
@@ -743,7 +742,8 @@ function GoalCard({
               <div className="tnum text-right text-xs text-ocean-700">
                 {plan.remainingThisMonth > 0.005 ? (
                   <p>
-                    guarde <strong>R$ {formatMoney(plan.remainingThisMonth)}</strong>{" "}
+                    guarde{" "}
+                    <strong>R$ {formatMoney(plan.remainingThisMonth)}</strong>{" "}
                     este mês
                   </p>
                 ) : (

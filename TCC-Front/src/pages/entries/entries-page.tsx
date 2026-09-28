@@ -509,8 +509,7 @@ const EntriesPage = () => {
                     ))}
                   </select>
                   <p className="field-hint">
-                    O valor sai do seu saldo disponível e passa a contar como
-                    guardado nessa meta.
+                    Uma nova receita atrelada em sua meta!
                     {form.goalId && " Título e categoria ficam opcionais."}
                   </p>
                 </div>
@@ -1252,7 +1251,10 @@ function DeleteEntryDialog({
                 Este é um lançamento fixo
                 {occurrences > 0 && (
                   <>
-                    {" "}com <strong className="text-ink-900">{occurrences}</strong>{" "}
+                    {" "}
+                    com <strong className="text-ink-900">
+                      {occurrences}
+                    </strong>{" "}
                     repetições já geradas
                   </>
                 )}
@@ -1274,7 +1276,11 @@ function DeleteEntryDialog({
             <button
               type="button"
               onClick={() =>
-                onDelete(entry.id, "Lançamento excluído só deste mês.", "single")
+                onDelete(
+                  entry.id,
+                  "Lançamento excluído só deste mês.",
+                  "single",
+                )
               }
               className="btn-danger w-full"
             >
@@ -1293,13 +1299,21 @@ function DeleteEntryDialog({
             >
               Excluir todos os meses
             </button>
-            <button type="button" onClick={onClose} className="btn-ghost w-full">
+            <button
+              type="button"
+              onClick={onClose}
+              className="btn-ghost w-full"
+            >
               Cancelar
             </button>
           </div>
         ) : (
           <div className="mt-6 flex gap-3">
-            <button type="button" onClick={onClose} className="btn-ghost flex-1">
+            <button
+              type="button"
+              onClick={onClose}
+              className="btn-ghost flex-1"
+            >
               Cancelar
             </button>
             <button

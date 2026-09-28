@@ -2,7 +2,7 @@
 
 import { GoalsRepository } from "./goals.repository"
 import { prisma } from "../pluggins/prisma"
-import { isGoalCompleted, roundMoney, startOfNextMonth } from "./goals.rules"
+import { isGoalCompleted, roundMoney } from "./goals.rules"
 
 export class GoalsService {
 
@@ -80,66 +80,19 @@ export class GoalsService {
             throw new Error("Esta meta já foi concluída. Não é possível atrelar novos lançamentos a ela.");
         }
 
-        // Só conta o que já caiu até o mês atual.
-        const entries = await prisma.entry.findMany({
-            where: { userId, date: { lt: startOfNextMonth() } },
-            orderBy: { date: "asc" }
-        });
-
-        const freeIncome = entries.filter((entry) => entry.type === "income" && !entry.goalId);
-        const available = roundMoney(
-            freeIncome.reduce((total, entry) => total + entry.value, 0) -
-            entries
-                .filter((entry) => entry.type === "expenses")
-                .reduce((total, entry) => total + entry.value, 0)
-        );
-
-        if (target > available) {
-            throw new Error(
-                `Você tem R$ ${available.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} disponíveis para guardar.`
-            );
-        }
-
-        // Lançamentos fixos por último, para não transformar o modelo da
-        // repetição num lançamento de meta sem necessidade.
-        const candidates = [
-            ...freeIncome.filter((entry) => !entry.isFixed),
-            ...freeIncome.filter((entry) => entry.isFixed),
-        ];
-
-        await prisma.$transaction(async (tx) => {
-            let remaining = target;
-
-            for (const entry of candidates) {
-                if (remaining <= 0) break;
-
-                if (entry.value <= remaining) {
-                    await tx.entry.update({ where: { id: entry.id }, data: { goalId: id } });
-                    remaining = roundMoney(remaining - entry.value);
-                    continue;
-                }
-
-                await tx.entry.update({
-                    where: { id: entry.id },
-                    data: { value: roundMoney(entry.value - remaining) }
-                });
-                await tx.entry.create({
-                    data: {
-                        title: entry.title,
-                        description: entry.description,
-                        value: remaining,
-                        type: "income",
-                        date: entry.date,
-                        userId,
-                        categoryId: entry.categoryId,
-                        goalId: id
-                    }
-                });
-                remaining = 0;
+        const now = new Date();
+        const entry = await prisma.entry.create({
+            data: {
+                title: `Guardado em ${goal.title}`,
+                value: target,
+                type: "income",
+                date: new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())),
+                userId,
+                goalId: id
             }
         });
 
-        return { amount: target };
+        return entry;
     }
 
     async deleteGoal(id: string, userId: string) {
@@ -148,10 +101,7 @@ export class GoalsService {
             throw new Error("Meta não encontrada ou sem permissão");
         }
 
-        // Enquanto atrelados, esses lançamentos ficam fora do saldo disponível do
-        // usuário (é uma "caixinha": o valor está reservado para a meta). Por isso,
-        // ao excluir a meta, apenas desvinculamos os lançamentos — eles continuam
-        // no histórico e o valor volta a contar no saldo disponível.
+
         await prisma.entry.updateMany({
             where: { goalId: id, userId },
             data: { goalId: null }

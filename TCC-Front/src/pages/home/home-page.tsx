@@ -54,10 +54,14 @@ const savedInGoal = (goal: Goal) => sumSavedEntries(goal.entries);
 
 const DISMISS_KEY = "granafy:dismissedGoalSuggestion";
 
-// A dispensa vale para aquela sugestão específica: se a meta for editada, o
-// mês virar ou o quanto falta mudar, a sugestão volta a aparecer.
 const suggestionKey = (goal: Goal, amount: number) =>
-  [goal.id, currentMonthKey(), goal.value, goal.limitDate, amount.toFixed(2)].join("|");
+  [
+    goal.id,
+    currentMonthKey(),
+    goal.value,
+    goal.limitDate,
+    amount.toFixed(2),
+  ].join("|");
 
 const HomePage = () => {
   const toast = useToast();
@@ -128,7 +132,8 @@ const HomePage = () => {
       .reduce((total, entry) => total + entry.value, 0);
     const monthIncome = sum(monthEntries, "income") - monthGoalsIncome;
     const monthExpenses = sum(monthEntries, "expenses");
-    const totalBalance = sum(pastEntries, "income") - sum(pastEntries, "expenses");
+    const totalBalance =
+      sum(pastEntries, "income") - sum(pastEntries, "expenses");
     const goalsBalance = pastEntries
       .filter((entry) => entry.type === "income" && entry.goalId)
       .reduce((total, entry) => total + entry.value, 0);
@@ -155,23 +160,19 @@ const HomePage = () => {
     [goals],
   );
 
-  // Sugere guardar o que ainda falta da parcela deste mês na meta mais
-  // próxima do prazo (ou o que houver disponível, se for menos que isso).
   const suggestion = useMemo(() => {
-    if (finances.availableBalance <= 0.005) return null;
-
     for (const goal of activeGoals) {
       const { remainingThisMonth } = getGoalMonthlyPlan(goal);
       if (remainingThisMonth <= 0.005) continue;
 
-      const amount = Math.round(Math.min(remainingThisMonth, finances.availableBalance) * 100) / 100;
+      const amount = Math.round(remainingThisMonth * 100) / 100;
       const key = suggestionKey(goal, amount);
       if (key === dismissedKey) continue;
 
       return { goal, amount, key };
     }
     return null;
-  }, [activeGoals, finances.availableBalance, dismissedKey]);
+  }, [activeGoals, dismissedKey]);
 
   const monthLabel = formatMonthLabel(new Date().toISOString());
 
@@ -287,11 +288,12 @@ const HomePage = () => {
             </span>
             <div>
               <p className="font-display text-sm font-bold text-ocean-900">
-                Você tem R$ {formatMoney(finances.availableBalance)} disponíveis
+                Faltam R$ {formatMoney(suggestion.amount)} na parcela deste mês
               </p>
               <p className="mt-0.5 text-sm text-ocean-900/80">
-                Que tal guardar R$ {formatMoney(suggestion.amount)} este mês na
-                meta “{suggestion.goal.title}”?
+                Que tal guardar esse valor agora na meta “
+                {suggestion.goal.title}”? Ele entra como uma receita da meta,
+                sem mexer no seu saldo disponível.
               </p>
             </div>
           </div>
