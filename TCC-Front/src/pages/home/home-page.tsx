@@ -160,19 +160,25 @@ const HomePage = () => {
     [goals],
   );
 
+  // Sugere guardar, do saldo disponível do mês, o que ainda falta da parcela
+  // deste mês na meta mais próxima do prazo (ou o que houver disponível, se
+  // for menos que isso). O valor sai do saldo disponível e vai para a meta.
   const suggestion = useMemo(() => {
+    if (finances.availableBalance <= 0.005) return null;
+
     for (const goal of activeGoals) {
       const { remainingThisMonth } = getGoalMonthlyPlan(goal);
       if (remainingThisMonth <= 0.005) continue;
 
-      const amount = Math.round(remainingThisMonth * 100) / 100;
+      const amount =
+        Math.round(Math.min(remainingThisMonth, finances.availableBalance) * 100) / 100;
       const key = suggestionKey(goal, amount);
       if (key === dismissedKey) continue;
 
       return { goal, amount, key };
     }
     return null;
-  }, [activeGoals, dismissedKey]);
+  }, [activeGoals, finances.availableBalance, dismissedKey]);
 
   const monthLabel = formatMonthLabel(new Date().toISOString());
 
@@ -288,12 +294,11 @@ const HomePage = () => {
             </span>
             <div>
               <p className="font-display text-sm font-bold text-ocean-900">
-                Faltam R$ {formatMoney(suggestion.amount)} na parcela deste mês
+                Você tem R$ {formatMoney(finances.availableBalance)} disponíveis
               </p>
               <p className="mt-0.5 text-sm text-ocean-900/80">
-                Que tal guardar esse valor agora na meta “
-                {suggestion.goal.title}”? Ele entra como uma receita da meta,
-                sem mexer no seu saldo disponível.
+                Que tal guardar R$ {formatMoney(suggestion.amount)} este mês na
+                meta “{suggestion.goal.title}”?
               </p>
             </div>
           </div>
