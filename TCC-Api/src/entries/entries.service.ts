@@ -255,6 +255,9 @@ export class EntriesService {
         if (effectiveType === "expenses" && data.goalId === undefined && (entry as any).goalId) {
             updatePayload.goalId = null;
         }
+        if (updatePayload.goalId === null) {
+            updatePayload.fromDeposit = false;
+        }
 
         return await this.entriesRepository.update(id, userId, updatePayload);
     }
@@ -265,6 +268,12 @@ export class EntriesService {
         const entry = await this.entriesRepository.findById(id, userId);
         if (!entry) {
             throw new Error("Lançamento não encontrado ou sem permissão");
+        }
+
+        // Valor guardado pela sugestão da home veio do saldo disponível:
+        // excluí-lo só desfaz o "guardar", devolvendo o dinheiro ao saldo.
+        if (entry.goalId && entry.fromDeposit) {
+            return await this.entriesRepository.unlinkFromGoal(id);
         }
 
         const parent = entry.parentId

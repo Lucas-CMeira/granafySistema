@@ -55,6 +55,7 @@ type Entry = {
   fixedDay?: number | null;
   repeatCount?: number | null;
   parentId?: string | null;
+  fromDeposit?: boolean;
 };
 
 type TypeFilter = "all" | "income" | "expenses";
@@ -1208,8 +1209,10 @@ function DeleteEntryDialog({
 }) {
   if (!entry) return null;
 
-  const isOccurrence = Boolean(entry.parentId);
-  const isTemplate = Boolean(entry.isFixed);
+  // Valor guardado pela sugestão da home: excluir só devolve ao saldo.
+  const isDeposit = Boolean(entry.goalId && entry.fromDeposit);
+  const isOccurrence = !isDeposit && Boolean(entry.parentId);
+  const isTemplate = !isDeposit && Boolean(entry.isFixed);
 
   return (
     <Modal
@@ -1263,6 +1266,15 @@ function DeleteEntryDialog({
             )}{" "}
             Você pode excluir só o mês de {formatMonthLabel(entry.date)} e
             manter os outros, ou excluir todos os meses.
+          </p>
+        ) : isDeposit ? (
+          <p className="text-sm leading-relaxed text-ink-600">
+            Este valor foi guardado em{" "}
+            <strong className="text-ink-900">
+              “{entry.goal?.title ?? "uma meta"}”
+            </strong>{" "}
+            a partir do saldo disponível. Ao excluir, ele sai da meta e volta
+            para o saldo disponível.
           </p>
         ) : (
           <p className="text-sm leading-relaxed text-ink-600">
@@ -1318,7 +1330,14 @@ function DeleteEntryDialog({
             </button>
             <button
               type="button"
-              onClick={() => onDelete(entry.id, "Lançamento excluído.")}
+              onClick={() =>
+                onDelete(
+                  entry.id,
+                  isDeposit
+                    ? "Valor devolvido ao saldo disponível."
+                    : "Lançamento excluído.",
+                )
+              }
               className="btn-danger flex-1"
             >
               Excluir

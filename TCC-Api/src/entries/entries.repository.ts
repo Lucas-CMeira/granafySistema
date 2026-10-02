@@ -107,6 +107,13 @@ export class EntriesRepository {
         ])
     }
 
+    async unlinkFromGoal(id: string) {
+        return await prisma.entry.update({
+            where: { id },
+            data: { goalId: null, fromDeposit: false }
+        })
+    }
+
     async deleteChildEntries(parentId: string) {
         return await prisma.entry.deleteMany({
             where: { parentId }

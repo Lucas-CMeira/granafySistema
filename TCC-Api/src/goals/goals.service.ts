@@ -120,7 +120,7 @@ export class GoalsService {
                 if (remaining <= 0) break;
 
                 if (entry.value <= remaining) {
-                    await tx.entry.update({ where: { id: entry.id }, data: { goalId: id } });
+                    await tx.entry.update({ where: { id: entry.id }, data: { goalId: id, fromDeposit: true } });
                     remaining = roundMoney(remaining - entry.value);
                     continue;
                 }
@@ -138,7 +138,8 @@ export class GoalsService {
                         date: entry.date,
                         userId,
                         categoryId: entry.categoryId,
-                        goalId: id
+                        goalId: id,
+                        fromDeposit: true
                     }
                 });
                 remaining = 0;
