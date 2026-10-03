@@ -1209,7 +1209,6 @@ function DeleteEntryDialog({
 }) {
   if (!entry) return null;
 
-  // Valor guardado pela sugestão da home: excluir só devolve ao saldo.
   const isDeposit = Boolean(entry.goalId && entry.fromDeposit);
   const isOccurrence = !isDeposit && Boolean(entry.parentId);
   const isTemplate = !isDeposit && Boolean(entry.isFixed);

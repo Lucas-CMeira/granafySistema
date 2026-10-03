@@ -39,10 +39,8 @@ export const sumSavedEntries = (entries: GoalEntry[] = []) => sumValues(savedEnt
 export const isGoalCompleted = (goal: Goal) => sumSavedEntries(goal.entries) >= goal.value;
 
 export type GoalMonthlyPlan = {
-  // Quanto guardar por mês, calculado com o que faltava no início do mês.
   monthlyTarget: number;
   savedThisMonth: number;
-  // O que ainda falta guardar neste mês, já descontando os depósitos dele.
   remainingThisMonth: number;
 };
 

@@ -54,7 +54,6 @@ model Entry {
   repeatCount Int?    @map("repeat_count")
   parentId    String? @map("parent_id")
   skippedMonths String[] @default([]) @map("skipped_months")
-  // Valor movido do saldo disponível para a meta pela sugestão da home.
   fromDeposit Boolean @default(false) @map("from_deposit")
 
   @@map("entry")
