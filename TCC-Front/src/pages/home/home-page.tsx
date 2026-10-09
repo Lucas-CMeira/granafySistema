@@ -110,8 +110,6 @@ const HomePage = () => {
 
   const currentMonth = useMemo(() => currentMonthKey(), []);
 
-  // Repetições de meses futuros já existem no banco, mas ainda não caíram:
-  // o saldo considera só o que entrou e saiu até o mês atual.
   const pastEntries = useMemo(
     () => entries.filter((entry) => isUpToCurrentMonth(entry.date)),
     [entries],
@@ -160,9 +158,6 @@ const HomePage = () => {
     [goals],
   );
 
-  // Sugere guardar, do saldo disponível do mês, o que ainda falta da parcela
-  // deste mês na meta mais próxima do prazo (ou o que houver disponível, se
-  // for menos que isso). O valor sai do saldo disponível e vai para a meta.
   const suggestion = useMemo(() => {
     if (finances.availableBalance <= 0.005) return null;
 

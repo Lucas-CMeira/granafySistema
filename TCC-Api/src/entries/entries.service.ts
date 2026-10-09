@@ -116,7 +116,6 @@ export class EntriesService {
                     continue;
                 }
 
-                // Mês cuja repetição o usuário excluiu individualmente.
                 if (fixed.skippedMonths.includes(monthKeyOf(targetDate))) {
                     continue;
                 }
@@ -241,9 +240,6 @@ export class EntriesService {
                 throw new Error("Informe quantas vezes o lançamento deve se repetir (1 a 12 meses)");
             }
 
-            // Reduzir a repetição não pode deixar para trás ocorrências já geradas
-            // além da nova quantidade — elas são excluídas, mantendo só as que
-            // ainda cabem no novo total.
             const effectiveDate = data.date !== undefined ? new Date(data.date) : new Date((entry as any).date);
             const startYear = effectiveDate.getUTCFullYear();
             const startMonth = effectiveDate.getUTCMonth();
@@ -262,16 +258,12 @@ export class EntriesService {
         return await this.entriesRepository.update(id, userId, updatePayload);
     }
 
-    // scope "single": exclui só o mês deste lançamento, mantendo os demais
-    // meses da repetição. scope "all": exclui o lançamento fixo inteiro.
     async deleteEntry(id: string, userId: string, scope: "single" | "all" = "all") {
         const entry = await this.entriesRepository.findById(id, userId);
         if (!entry) {
             throw new Error("Lançamento não encontrado ou sem permissão");
         }
 
-        // Valor guardado pela sugestão da home veio do saldo disponível:
-        // excluí-lo só desfaz o "guardar", devolvendo o dinheiro ao saldo.
         if (entry.goalId && entry.fromDeposit) {
             return await this.entriesRepository.unlinkFromGoal(id);
         }
@@ -282,14 +274,11 @@ export class EntriesService {
 
         if (scope === "single") {
             if (parent) {
-                // Marca o mês como pulado para a sincronização não recriá-lo.
                 await this.entriesRepository.addSkippedMonth(parent.id, monthKeyOf(entry.date));
                 return await this.entriesRepository.delete(id, userId);
             }
 
             if (entry.isFixed) {
-                // O próprio fixo é o primeiro mês da série: a próxima repetição
-                // assume o papel de lançamento fixo pelos meses que restam.
                 const [next] = await this.entriesRepository.findChildEntries(id);
                 if (!next) {
                     return await this.entriesRepository.delete(id, userId);

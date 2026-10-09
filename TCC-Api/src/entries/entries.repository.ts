@@ -87,8 +87,6 @@ export class EntriesRepository {
         })
     }
 
-    // Transforma a repetição `nextId` no novo lançamento fixo da série e
-    // exclui o fixo antigo, reapontando as demais repetições para ela.
     async promoteToFixed(
         oldId: string,
         nextId: string,
