@@ -101,8 +101,6 @@ const ProfilePage = () => {
     fetchData();
   }, []);
 
-  // Repetições futuras de lançamentos fixos ainda não aconteceram e ficam
-  // fora dos indicadores e gráficos.
   const pastEntries = useMemo(
     () => entries.filter((entry) => isUpToCurrentMonth(entry.date)),
     [entries],
@@ -144,15 +142,15 @@ const ProfilePage = () => {
 
   const topCategory = categoryChartData[0];
 
-  // Janela fixa dos 6 meses que terminam no mês atual do calendário, para o
-  // gráfico andar junto com o tempo (meses sem lançamento aparecem zerados).
   const monthlyChartData = useMemo(() => {
     if (entries.length === 0) return [];
 
     const now = new Date();
     const byMonth = new Map<string, { Receitas: number; Despesas: number }>();
     for (let offset = 5; offset >= 0; offset--) {
-      const month = new Date(Date.UTC(now.getFullYear(), now.getMonth() - offset, 15));
+      const month = new Date(
+        Date.UTC(now.getFullYear(), now.getMonth() - offset, 15),
+      );
       byMonth.set(monthKey(month.toISOString()), { Receitas: 0, Despesas: 0 });
     }
 
@@ -164,9 +162,9 @@ const ProfilePage = () => {
     });
 
     return [...byMonth.entries()].map(([key, values]) => ({
-        name: formatMonthLabel(`${key}-15`).split(" de ")[0].slice(0, 3),
-        ...values,
-      }));
+      name: formatMonthLabel(`${key}-15`).split(" de ")[0].slice(0, 3),
+      ...values,
+    }));
   }, [entries]);
 
   const filteredEntries = useMemo(() => {

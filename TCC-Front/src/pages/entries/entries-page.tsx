@@ -76,7 +76,6 @@ type FormState = typeof EMPTY_FORM;
 
 type DeleteScope = "single" | "all";
 
-// Receita guardada numa meta dispensa título e categoria.
 const isGoalDeposit = (state: FormState) =>
   state.type === "income" && Boolean(state.goalId);
 
@@ -140,8 +139,6 @@ const EntriesPage = () => {
   const isOthers = (categoryId: string) =>
     categories.find((category) => category.id === categoryId)?.name ===
     "Outros";
-
-  // Metas já concluídas não podem receber novos lançamentos.
 
   const availableGoals = (selectedGoalId: string) =>
     goals.filter(

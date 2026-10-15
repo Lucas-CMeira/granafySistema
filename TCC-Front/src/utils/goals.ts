@@ -26,8 +26,6 @@ export type GoalCompletion = {
   status: "none" | "early" | "on_time" | "late";
 };
 
-// Só conta como guardado o que já caiu: repetições futuras de uma receita
-// fixa atrelada à meta entram no mês delas.
 const savedEntries = (entries: GoalEntry[] = []) =>
   entries.filter((entry) => entry.type === "income" && isUpToCurrentMonth(entry.date));
 
